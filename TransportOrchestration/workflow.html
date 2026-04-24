@@ -18,11 +18,13 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
   --radius: 8px;
 }
-html, body { height: 100%; overflow: hidden; }
-body { display: flex; flex-direction: column; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; }
+
+/* Allow normal page scrolling inside the iframe */
+html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; }
+body { display: flex; flex-direction: column; }
 
 /* ── Subheader ── */
-.subheader { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; box-shadow: var(--shadow-sm); }
+.subheader { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 20; }
 .subheader-left { display: flex; align-items: center; gap: 10px; }
 .subheader-title { font-size: 14px; font-weight: 600; color: var(--text); }
 .badge-live { display: inline-flex; align-items: center; gap: 5px; background: var(--critical-bg); border: 1px solid var(--critical-border); color: var(--critical); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
@@ -30,55 +32,72 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .subheader-meta { font-size: 11px; color: var(--text-3); }
 
+/* ── Agent pipeline strip ── */
+.agent-strip { display: flex; align-items: center; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); gap: 0; overflow-x: auto; flex-shrink: 0; }
+.agent-strip::-webkit-scrollbar { height: 0; }
+.agent-step { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 90px; cursor: pointer; padding: 0 4px; }
+.as-circle { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; }
+.as-circle.done    { border-color: var(--success); background: var(--success-bg); }
+.as-circle.running { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 3px rgba(22,105,245,0.1); }
+.as-circle.waiting { border-color: var(--warning); background: var(--warning-bg); border-style: dashed; }
+.as-circle.idle    { border-color: var(--border); background: var(--bg); opacity: 0.5; }
+.as-label { font-size: 9px; font-weight: 600; color: var(--text-3); text-align: center; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.03em; }
+.as-label.done    { color: var(--success); }
+.as-label.running { color: var(--primary); }
+.as-label.waiting { color: var(--warning); }
+.as-connector { flex: 1; height: 1px; min-width: 10px; max-width: 28px; }
+.ac-done    { background: var(--success); }
+.ac-running { background: linear-gradient(90deg, var(--success), var(--primary)); }
+.ac-idle    { background: var(--border); }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── Filter bar ── */
 .filter-bar { display: flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .filter-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; margin-right: 4px; }
-.filter-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; border: 1px solid var(--border); background: white; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.15s; user-select: none; }
+.filter-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 20px; border: 1px solid var(--border); background: white; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.15s; user-select: none; }
 .filter-pill:hover { border-color: var(--primary); color: var(--primary); }
 .filter-pill.active { background: var(--primary-bg); border-color: var(--primary-border); color: var(--primary); font-weight: 600; }
-.filter-pill .fp-count { font-size: 11px; background: currentColor; color: white; border-radius: 10px; padding: 0 5px; min-width: 16px; text-align: center; }
+.fp-count { font-size: 10px; background: #D1D5DB; color: white; border-radius: 10px; padding: 0 5px; min-width: 16px; text-align: center; }
 .filter-pill.active .fp-count { background: var(--primary); }
-.filter-pill.fp-critical.active { background: var(--critical-bg); border-color: var(--critical-border); color: var(--critical); }
-.filter-pill.fp-critical.active .fp-count { background: var(--critical); }
-.filter-pill.fp-high.active { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
-.filter-pill.fp-high.active .fp-count { background: var(--warning); }
-.filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.filter-divider { width: 1px; height: 18px; background: var(--border); }
 
-/* ── Layout ── */
-.body { display: flex; flex: 1; overflow: hidden; }
-.main { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.main::-webkit-scrollbar { width: 4px; }
-.main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ── Main content ── */
+.main { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; }
 
 /* ── KPI strip ── */
-.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; flex-shrink: 0; }
-.kpi-item { padding: 12px 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.kpi-item { padding: 12px 16px; border-right: 1px solid var(--border); }
 .kpi-item:last-child { border-right: none; }
 .kpi-label { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
-.kpi-val { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.1; margin-top: 2px; transition: all 0.4s; }
+.kpi-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-top: 2px; transition: color 0.4s; }
 .kpi-val.red { color: var(--critical); }
 .kpi-val.amber { color: var(--warning); }
 .kpi-val.blue { color: var(--primary); }
 .kpi-val.green { color: var(--success); }
-.kpi-sub { font-size: 11px; color: var(--text-3); }
-.kpi-val.bump { animation: bumpUp 0.5s ease-out; }
-@keyframes bumpUp { 0%{transform:scale(1.2);color:#059669} 100%{transform:scale(1)} }
+.kpi-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+@keyframes bump { 0%{transform:scale(1.15)} 100%{transform:scale(1)} }
+.bump { animation: bump 0.4s ease-out; }
 
 /* ── Exception card ── */
-.exc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: box-shadow 0.2s, opacity 0.4s, max-height 0.5s ease, margin 0.5s ease; }
+.exc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: box-shadow 0.2s, opacity 0.5s, max-height 0.5s ease; }
 .exc-card:hover { box-shadow: var(--shadow-md); }
-.exc-card.collapsing { opacity: 0; max-height: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; overflow: hidden; border: none; }
+
 .card-stripe { height: 3px; }
 .stripe-critical { background: linear-gradient(90deg, var(--critical), #F87171); }
 .stripe-high     { background: linear-gradient(90deg, var(--warning), #FCD34D); }
 .stripe-medium   { background: linear-gradient(90deg, #8B5CF6, #C4B5FD); }
-.card-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.stripe-info     { background: linear-gradient(90deg, var(--primary), #93C5FD); }
+
+.card-body { padding: 14px 18px; }
+
+/* ── Card header ── */
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .card-id { font-size: 11px; color: var(--text-3); font-family: 'SF Mono', 'Fira Code', monospace; }
 .card-carrier { font-size: 11px; color: var(--text-2); }
 .card-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-.badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; border: 1px solid; }
 .pill-critical { background: var(--critical-bg); border-color: var(--critical-border); color: var(--critical); }
 .pill-high     { background: var(--warning-bg);  border-color: var(--warning-border);  color: var(--warning); }
@@ -86,65 +105,90 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 .pill-blue     { background: var(--primary-bg);  border-color: var(--primary-border);  color: var(--primary); }
 .pill-success  { background: var(--success-bg);  border-color: var(--success-border);  color: var(--success); }
 .pill-purple   { background: var(--purple-bg);   border-color: var(--purple-border);   color: var(--purple); }
+.pill-gray     { background: var(--bg);          border-color: var(--border);          color: var(--text-2); }
 
 /* ── Impact grid ── */
-.impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg); border-radius: 6px; border: 1px solid var(--border-2); overflow: hidden; }
-.impact-cell { padding: 9px 13px; border-right: 1px solid var(--border); }
+.impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg); border-radius: 6px; border: 1px solid var(--border-2); overflow: hidden; margin-bottom: 10px; }
+.impact-cell { padding: 8px 12px; border-right: 1px solid var(--border); }
 .impact-cell:last-child { border-right: none; }
 .impact-lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; margin-bottom: 2px; }
-.impact-num { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.impact-num { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
 .impact-num.penalty { color: var(--critical); }
-.impact-num.deadline { color: var(--warning); }
+.impact-num.amber { color: var(--warning); }
 .impact-sub { font-size: 10px; color: var(--text-2); margin-top: 1px; }
 
-/* ── AI box ── */
-.ai-box { background: var(--primary-bg); border: 1px solid var(--primary-border); border-radius: 6px; padding: 11px 14px; display: flex; flex-direction: column; gap: 7px; }
-.ai-header { display: flex; align-items: center; justify-content: space-between; }
-.ai-label { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; }
-.ai-icon { width: 17px; height: 17px; background: var(--primary); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; }
-.confidence-bar-wrap { display: flex; align-items: center; gap: 7px; }
-.conf-label { font-size: 11px; font-weight: 700; color: var(--primary); }
-.conf-bar-track { width: 70px; height: 4px; background: var(--primary-border); border-radius: 3px; overflow: hidden; }
-.conf-bar-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+/* ── AI recommendation box ── */
+.ai-box { background: var(--primary-bg); border: 1px solid var(--primary-border); border-radius: 6px; padding: 10px 13px; margin-bottom: 10px; }
+.ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ai-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; }
+.ai-icon { width: 16px; height: 16px; background: var(--primary); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; }
+.conf-wrap { display: flex; align-items: center; gap: 6px; }
+.conf-track { width: 64px; height: 4px; background: var(--primary-border); border-radius: 2px; overflow: hidden; }
+.conf-fill { height: 100%; background: var(--primary); border-radius: 2px; }
+.conf-pct { font-size: 11px; font-weight: 700; color: var(--primary); }
 .ai-text { font-size: 12px; line-height: 1.55; color: var(--text-2); }
 .ai-text strong { color: var(--text); font-weight: 600; }
 .saving { color: var(--success); font-weight: 700; }
 
-/* ── Explainability ── */
-.explain-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--primary); background: none; border: none; padding: 0; font-family: inherit; transition: opacity 0.15s; }
+/* ── Additional Input Pending box ── */
+.input-pending-box { background: #FFF7ED; border: 1px solid var(--warning-border); border-radius: 6px; padding: 10px 13px; margin-bottom: 10px; }
+.ip-header { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.ip-icon { width: 16px; height: 16px; background: var(--warning); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; }
+.ip-text { font-size: 12px; line-height: 1.55; color: #92400E; }
+.ip-text strong { color: #78350F; font-weight: 600; }
+.ip-progress { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.ip-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+.ip-carrier { color: #92400E; }
+.ip-status-pill { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; border: 1px solid; }
+.ips-waiting  { background: #FEF3C7; border-color: #FDE68A; color: #92400E; }
+.ips-received { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+
+/* ── Explain toggle ── */
+.explain-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--primary); background: none; border: none; padding: 0; font-family: inherit; transition: opacity 0.15s; margin-bottom: 8px; }
 .explain-toggle:hover { opacity: 0.75; }
 .toggle-chevron { font-size: 10px; transition: transform 0.2s; display: inline-block; }
 .explain-toggle.open .toggle-chevron { transform: rotate(180deg); }
-.explain-body { display: none; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 2px; }
+.explain-body { display: none; padding: 10px 0 8px; border-top: 1px solid var(--border); margin-bottom: 8px; }
 .explain-body.open { display: block; }
-.reason-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.reason-list li { font-size: 12px; color: var(--text-2); padding-left: 14px; position: relative; line-height: 1.5; }
+.reason-list { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.reason-list li { font-size: 12px; color: var(--text-2); padding-left: 13px; position: relative; line-height: 1.5; }
 .reason-list li::before { content: ''; position: absolute; left: 2px; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
 .reason-list li strong { color: var(--text); font-weight: 600; }
 .carrier-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.carrier-table thead th { text-align: left; padding: 6px 10px; background: var(--bg); color: var(--text-3); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
-.carrier-table tbody td { padding: 7px 10px; border-bottom: 1px solid var(--border-2); color: var(--text-2); }
+.carrier-table thead th { text-align: left; padding: 5px 9px; background: var(--bg); color: var(--text-3); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+.carrier-table tbody td { padding: 6px 9px; border-bottom: 1px solid var(--border-2); color: var(--text-2); }
 .carrier-table tbody tr:last-child td { border-bottom: none; }
 .carrier-table tbody tr.rec-row td { color: var(--success); font-weight: 600; background: #F0FDF4; }
 .carrier-table .unavail { color: var(--text-3); }
 
-/* ── Actions ── */
-.card-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 15px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid; font-family: inherit; transition: all 0.15s; }
+/* ── Action buttons ── */
+.card-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 2px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
 .btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
 .btn-primary:hover { background: #1252CC; border-color: #1252CC; }
+.btn-success { background: var(--success); border-color: var(--success); color: white; }
+.btn-success:hover { background: #047857; border-color: #047857; }
 .btn-outline { background: white; border-color: var(--border); color: var(--text-2); }
 .btn-outline:hover { border-color: var(--text-3); color: var(--text); }
-.btn-ghost { background: transparent; border-color: transparent; color: var(--text-3); padding: 6px 10px; }
+.btn-warning { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
+.btn-warning:hover { background: #FDE68A; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--text-3); padding: 7px 10px; }
 .btn-ghost:hover { background: var(--bg); color: var(--text-2); }
-.override-row { display: none; align-items: center; gap: 8px; }
+
+/* ── Override / resolved rows ── */
+.override-row { display: none; align-items: center; gap: 8px; margin-top: 8px; }
 .override-row.visible { display: flex; }
 .override-input { flex: 1; min-width: 180px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text); font-size: 12px; font-family: inherit; }
-.override-input:focus { outline: none; border-color: var(--primary); }
-.btn-confirm { background: #FFF7ED; border: 1px solid #FED7AA; color: var(--warning); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.override-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22,105,245,0.08); }
+.btn-confirm { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+.resolved-banner { display: none; align-items: center; gap: 8px; padding: 8px 13px; background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 6px; color: var(--success); font-weight: 600; font-size: 12px; margin-top: 8px; }
+.resolved-banner.visible { display: flex; }
 
 /* ── Sidebar ── */
-.sidebar { width: 270px; flex-shrink: 0; background: var(--card); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.layout { display: flex; gap: 0; }
+.content { flex: 1; padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sidebar { width: 270px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column; position: sticky; top: 129px; /* subheader + agent strip + filter = ~129px */ height: calc(100vh - 129px); overflow-y: auto; }
 .sidebar::-webkit-scrollbar { width: 3px; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 .sidebar-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
@@ -168,57 +212,102 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; }
 .stat-val { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
 .stat-lbl { font-size: 10px; color: var(--text-3); margin-top: 3px; font-weight: 500; }
-.recent-list { display: flex; flex-direction: column; gap: 6px; }
-.recent-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
-.recent-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.recent-list { display: flex; flex-direction: column; gap: 5px; }
+.recent-item { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 7px 10px; }
+.recent-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
 .recent-id { font-size: 11px; font-family: monospace; color: var(--text-2); font-weight: 500; }
-.recent-pill { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; border: 1px solid; }
+.recent-pill { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 20px; border: 1px solid; }
 .rp-accepted  { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
 .rp-overwrite { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
 .recent-detail { font-size: 11px; color: var(--text-3); line-height: 1.4; }
 
 /* ── Toast ── */
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: white; font-size: 12px; font-weight: 500; padding: 9px 18px; border-radius: 8px; box-shadow: var(--shadow-md); opacity: 0; transition: all 0.3s ease; z-index: 100; white-space: nowrap; pointer-events: none; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #111827; color: white; font-size: 12px; font-weight: 500; padding: 9px 18px; border-radius: 8px; box-shadow: var(--shadow-md); opacity: 0; transition: all 0.3s ease; z-index: 999; white-space: nowrap; pointer-events: none; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ── Collapsing animation ── */
+.exc-card.collapsing { overflow: hidden; transition: max-height 0.5s ease, opacity 0.4s ease, margin 0.5s ease, padding 0.5s ease; opacity: 0; }
+
 /* ── Empty state ── */
-.empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; }
 .empty-state.visible { display: flex; }
-.empty-icon { font-size: 36px; }
+.empty-icon { font-size: 32px; }
 .empty-title { font-size: 15px; font-weight: 600; color: var(--text); }
-.empty-sub { font-size: 13px; color: var(--text-3); text-align: center; }
+.empty-sub { font-size: 13px; color: var(--text-3); }
 </style>
 </head>
 <body>
 
+<!-- Sticky subheader -->
 <div class="subheader">
   <div class="subheader-left">
-    <span class="subheader-title">Exception Triage</span>
+    <span class="subheader-title">Exception Triage — Final Approval</span>
     <div class="badge-live" id="live-badge"><span class="badge-dot"></span><span id="badge-text">5 Requiring Action</span></div>
   </div>
   <div class="subheader-meta">Refreshed · 09:17 UTC, Apr 24 2026</div>
 </div>
 
+<!-- Agent pipeline strip -->
+<div class="agent-strip">
+  <div class="agent-step">
+    <div class="as-circle done">🔍</div>
+    <div class="as-label done">Exception<br>Triage</div>
+  </div>
+  <div class="as-connector ac-done"></div>
+  <div class="agent-step">
+    <div class="as-circle done">🚚</div>
+    <div class="as-label done">Carrier<br>Performance</div>
+  </div>
+  <div class="as-connector ac-done"></div>
+  <div class="agent-step">
+    <div class="as-circle done">📋</div>
+    <div class="as-label done">Order SLA<br>Priority</div>
+  </div>
+  <div class="as-connector ac-running"></div>
+  <div class="agent-step">
+    <div class="as-circle running"><span class="spin" style="font-size:11px">◌</span></div>
+    <div class="as-label running">Spot<br>Tendering</div>
+  </div>
+  <div class="as-connector ac-idle"></div>
+  <div class="agent-step">
+    <div class="as-circle waiting">📦</div>
+    <div class="as-label waiting">Load<br>Consolidation</div>
+  </div>
+  <div class="as-connector ac-idle"></div>
+  <div class="agent-step">
+    <div class="as-circle idle">📊</div>
+    <div class="as-label">Impact<br>Simulation</div>
+  </div>
+  <div class="as-connector ac-idle"></div>
+  <div class="agent-step">
+    <div class="as-circle waiting">👤</div>
+    <div class="as-label waiting">Final<br>Approval</div>
+  </div>
+</div>
+
+<!-- Filter bar -->
 <div class="filter-bar">
   <span class="filter-label">Filter</span>
   <div class="filter-pill active" onclick="setFilter('all', this)">All <span class="fp-count" id="fc-all">5</span></div>
-  <div class="filter-pill fp-critical" onclick="setFilter('Critical', this)">Critical <span class="fp-count" id="fc-critical">1</span></div>
-  <div class="filter-pill fp-high" onclick="setFilter('High', this)">High <span class="fp-count" id="fc-high">3</span></div>
-  <div class="filter-pill" onclick="setFilter('Medium', this)">Medium <span class="fp-count" id="fc-medium">1</span></div>
+  <div class="filter-pill" onclick="setFilter('critical', this)" style="color:var(--critical)">Critical <span class="fp-count" id="fc-crit" style="background:var(--critical)">1</span></div>
+  <div class="filter-pill" onclick="setFilter('high', this)" style="color:var(--warning)">High <span class="fp-count" id="fc-high" style="background:var(--warning)">3</span></div>
+  <div class="filter-pill" onclick="setFilter('medium', this)" style="color:var(--purple)">Medium <span class="fp-count" id="fc-med" style="background:var(--purple)">1</span></div>
   <div class="filter-divider"></div>
-  <div class="filter-pill" onclick="setFilter('awaiting', this)">Awaiting Approval <span class="fp-count" id="fc-awaiting">4</span></div>
-  <div class="filter-pill" onclick="setFilter('inprogress', this)">In Progress <span class="fp-count" id="fc-inprogress">1</span></div>
+  <div class="filter-pill" onclick="setFilter('awaiting', this)">Awaiting Approval <span class="fp-count" id="fc-await">3</span></div>
+  <div class="filter-pill" onclick="setFilter('input', this)" style="color:var(--warning)">Input Requested <span class="fp-count" id="fc-input" style="background:var(--warning)">1</span></div>
+  <div class="filter-pill" onclick="setFilter('inprogress', this)" style="color:var(--purple)">In Progress <span class="fp-count" id="fc-prog" style="background:var(--purple)">1</span></div>
 </div>
 
-<div class="body">
-  <div class="main" id="main-content">
+<!-- Body: exceptions + sidebar -->
+<div class="layout">
+  <div class="content">
 
     <!-- KPI strip -->
     <div class="kpi-strip">
       <div class="kpi-item">
         <div class="kpi-label">Open Exceptions</div>
         <div class="kpi-val red" id="kpi-open">5</div>
-        <div class="kpi-sub" id="kpi-open-sub">Require decision</div>
+        <div class="kpi-sub">Require decision</div>
       </div>
       <div class="kpi-item">
         <div class="kpi-label">Penalty Exposure</div>
@@ -228,7 +317,7 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       <div class="kpi-item">
         <div class="kpi-label">Shipments Affected</div>
         <div class="kpi-val blue" id="kpi-ships">25</div>
-        <div class="kpi-sub" id="kpi-ships-sub">Across 5 lanes</div>
+        <div class="kpi-sub">Across 5 lanes</div>
       </div>
       <div class="kpi-item">
         <div class="kpi-label">Resolved Today</div>
@@ -237,7 +326,10 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       </div>
     </div>
 
-    <!-- EX-1847 Critical: Carrier Cancellation -->
+    <!-- ═══════════════════════════════════════════════
+         EX-1847  Critical · Carrier Cancellation
+         State: AI recommendation ready → Awaiting Approval
+    ════════════════════════════════════════════════ -->
     <div class="exc-card" id="card-1847">
       <div class="card-stripe stripe-critical"></div>
       <div class="card-body">
@@ -245,15 +337,16 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           <div>
             <div class="card-id-row">
               <span class="card-id">EX-2026-1847</span>
-              <span class="card-carrier">FastFreight GmbH · Detected 09:15 UTC</span>
+              <span class="card-carrier">FastFreight GmbH · 09:15 UTC</span>
             </div>
-            <div class="card-title">Carrier Cancellation — Same-Day</div>
+            <div class="card-title">Carrier Cancellation — Same-Day, 14 Shipments</div>
           </div>
           <div class="badges">
             <span class="pill pill-critical">Critical</span>
             <span class="pill pill-blue">Awaiting Approval</span>
           </div>
         </div>
+
         <div class="impact-grid">
           <div class="impact-cell">
             <div class="impact-lbl">Affected Shipments</div>
@@ -261,82 +354,96 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
             <div class="impact-sub">MUC-FRA · MUC-HAM · MUC-BER</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">SLA Penalty Exposure</div>
+            <div class="impact-lbl">Penalty Exposure</div>
             <div class="impact-num penalty">€14,400</div>
-            <div class="impact-sub">Tier 1 customer contract</div>
+            <div class="impact-sub">Tier 1 customer</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">Resolution Deadline</div>
-            <div class="impact-num deadline">11:00 UTC</div>
+            <div class="impact-lbl">Deadline</div>
+            <div class="impact-num amber">11:00 UTC</div>
             <div class="impact-sub">1h 43m remaining</div>
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">AI Confidence</div>
-            <div class="impact-num">94 / 100</div>
-            <div class="impact-sub">High confidence</div>
+            <div class="impact-num">94/100</div>
+            <div class="impact-sub">High · Impact Simulation ✓</div>
           </div>
         </div>
+
         <div class="ai-box">
           <div class="ai-header">
-            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation</div>
-            <div class="confidence-bar-wrap">
-              <div class="conf-bar-track"><div class="conf-bar-fill" style="width:94%"></div></div>
-              <span class="conf-label">94%</span>
+            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation — Impact Simulation Agent</div>
+            <div class="conf-wrap">
+              <div class="conf-track"><div class="conf-fill" style="width:94%"></div></div>
+              <span class="conf-pct">94%</span>
             </div>
           </div>
           <div class="ai-text">
-            Reroute all 14 shipments to <strong>AlphaLogistics GmbH</strong> via Scenario 1.
-            Net additional cost <strong>+€1,218</strong> vs penalty avoided <strong>€14,400</strong> — <span class="saving">net saving €13,182</span>.
+            Reroute all 14 shipments to <strong>AlphaLogistics GmbH</strong> (Scenario 1).
+            Additional cost <strong>+€1,218</strong> vs penalty avoided <strong>€14,400</strong> —
+            <span class="saving">net saving €13,182</span>. Full capacity confirmed, OTD 94%.
           </div>
         </div>
-        <div>
-          <button class="explain-toggle open" onclick="toggleExplain(this)">Why this recommendation? <span class="toggle-chevron">▾</span></button>
-          <div class="explain-body open">
-            <ul class="reason-list" style="margin-top:10px;">
-              <li><strong>OTD Performance:</strong> AlphaLogistics achieved 94% on-time on MUC lanes over the last 90 days — best of all available carriers</li>
-              <li><strong>Full capacity confirmed:</strong> AlphaLogistics can absorb all 14 units same-day; no split routing required</li>
-              <li><strong>Cost model:</strong> Spot premium +€87/shipment (€1,218 total) vs €14,400 SLA penalty — net saving €13,182</li>
-              <li><strong>Historical precedent:</strong> AlphaLogistics completed 12 emergency reroutes on these lanes this quarter — all on time</li>
-            </ul>
-            <table class="carrier-table">
-              <thead><tr><th>Carrier</th><th>OTD Rate</th><th>Capacity</th><th>Spot Premium</th><th>Score</th></tr></thead>
-              <tbody>
-                <tr class="rec-row"><td>★ AlphaLogistics GmbH</td><td>94%</td><td>All 14 units</td><td>+€87/sh</td><td>94 / 100</td></tr>
-                <tr><td>SpeedCargo AG</td><td>87%</td><td class="unavail">No capacity</td><td>+€62/sh</td><td class="unavail">—</td></tr>
-                <tr><td>FlexTrans Europe</td><td>79%</td><td>8 units only</td><td>+€240/sh</td><td>52 / 100</td></tr>
-              </tbody>
-            </table>
-          </div>
+
+        <button class="explain-toggle" onclick="toggleExplain(this)">
+          Why this recommendation? <span class="toggle-chevron">▾</span>
+        </button>
+        <div class="explain-body">
+          <ul class="reason-list">
+            <li><strong>Carrier Performance Agent:</strong> AlphaLogistics — 94% OTD on MUC lanes (last 90 days), best of 3 available carriers</li>
+            <li><strong>Spot Tendering Agent:</strong> Confirmed full capacity (14 units) at spot rate +€87/unit; SpeedCargo has no capacity today</li>
+            <li><strong>Load Consolidation Agent:</strong> Single-carrier routing is optimal — no benefit from splitting across 2 carriers at this volume</li>
+            <li><strong>Impact Simulation Agent:</strong> Scenario 1 score 94/100 vs Scenario 2 (52/100, partial load) and Scenario 3 (71/100, split)</li>
+            <li><strong>Order Priority Agent:</strong> Müller Automotive (Tier 1) — SLA breach triggers €14,400 penalty clause at 11:00 UTC</li>
+          </ul>
+          <table class="carrier-table">
+            <thead><tr><th>Carrier</th><th>OTD</th><th>Capacity</th><th>Spot Premium</th><th>Scenario Score</th></tr></thead>
+            <tbody>
+              <tr class="rec-row"><td>★ AlphaLogistics GmbH</td><td>94%</td><td>All 14 units</td><td>+€87/unit</td><td>94 / 100</td></tr>
+              <tr><td>FlexTrans Europe</td><td>79%</td><td>8 units only</td><td>+€240/unit</td><td>52 / 100</td></tr>
+              <tr><td>SpeedCargo AG</td><td>87%</td><td class="unavail">No capacity</td><td>+€62/unit</td><td class="unavail">—</td></tr>
+            </tbody>
+          </table>
         </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="card-actions" id="actions-1847">
-          <button class="btn btn-primary" onclick="handleAccept('1847', 14400, 14, '✓ AlphaLogistics reroute approved. TMS update initiated.')">✓ Accept Recommendation</button>
+          <button class="btn btn-success" onclick="handleAccept('1847', 14400, 14, '✓ AlphaLogistics reroute approved. TMS update initiated.')">✓ Accept Recommendation</button>
           <button class="btn btn-outline" onclick="handleOverwrite('1847')">✎ Override</button>
-          <button class="btn btn-ghost" onclick="handleInfo()">Request More Info</button>
+          <button class="btn btn-ghost" onclick="handleRequestInfo('1847')">⊕ Request More Info</button>
         </div>
         <div class="override-row" id="override-1847">
           <input class="override-input" id="override-text-1847" placeholder="Describe your routing decision and rationale…"/>
           <button class="btn-confirm" onclick="confirmOverride('1847', 14400, 14)">Confirm Override</button>
+          <button class="btn btn-ghost" onclick="cancelOverride('1847')">✕</button>
+        </div>
+        <div class="resolved-banner" id="banner-1847">
+          <span>✓</span><span id="banner-text-1847">Accepted — AlphaLogistics reroute approved. TMS update initiated.</span>
         </div>
       </div>
     </div>
 
-    <!-- EX-1853 High: Capacity Shortfall -->
+    <!-- ═══════════════════════════════════════════════
+         EX-1853  High · Capacity Shortfall
+         State: Additional Input Requested — Spot Tendering Agent awaiting carrier responses
+    ════════════════════════════════════════════════ -->
     <div class="exc-card" id="card-1853">
-      <div class="card-stripe stripe-high"></div>
+      <div class="card-stripe stripe-info"></div>
       <div class="card-body">
         <div class="card-header">
           <div>
             <div class="card-id-row">
               <span class="card-id">EX-2026-1853</span>
-              <span class="card-carrier">DirectFreight AG · Detected 08:42 UTC</span>
+              <span class="card-carrier">DirectFreight AG · 08:42 UTC</span>
             </div>
-            <div class="card-title">Capacity Shortfall — MUC-HAM</div>
+            <div class="card-title">Capacity Shortfall — MUC-HAM, 5 Shipments</div>
           </div>
           <div class="badges">
             <span class="pill pill-high">High</span>
-            <span class="pill pill-blue">Awaiting Approval</span>
+            <span class="pill pill-warning" style="background:#FFF7ED;border-color:var(--warning-border);color:var(--warning)">Input Requested</span>
           </div>
         </div>
+
         <div class="impact-grid">
           <div class="impact-cell">
             <div class="impact-lbl">Affected Shipments</div>
@@ -344,58 +451,69 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
             <div class="impact-sub">MUC-HAM lane</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">SLA Penalty Exposure</div>
+            <div class="impact-lbl">Penalty Exposure</div>
             <div class="impact-num penalty">€8,600</div>
-            <div class="impact-sub">Tier 2 customer contract</div>
+            <div class="impact-sub">Tier 2 customer</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">Resolution Deadline</div>
-            <div class="impact-num deadline">12:30 UTC</div>
+            <div class="impact-lbl">Deadline</div>
+            <div class="impact-num amber">12:30 UTC</div>
             <div class="impact-sub">3h 13m remaining</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">AI Confidence</div>
-            <div class="impact-num">89 / 100</div>
-            <div class="impact-sub">High confidence</div>
+            <div class="impact-lbl">Status</div>
+            <div class="impact-num" style="color:var(--primary);font-size:12px">Tendering</div>
+            <div class="impact-sub">Awaiting 2 of 4 responses</div>
           </div>
         </div>
-        <div class="ai-box">
-          <div class="ai-header">
-            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation</div>
-            <div class="confidence-bar-wrap">
-              <div class="conf-bar-track"><div class="conf-bar-fill" style="width:89%"></div></div>
-              <span class="conf-label">89%</span>
+
+        <div class="input-pending-box">
+          <div class="ip-header"><div class="ip-icon">📋</div> Additional Input Form — Intelligent Spot Tendering Agent</div>
+          <div class="ip-text">
+            <strong>No single carrier has full capacity for 5 units on MUC-HAM today.</strong>
+            The Spot Tendering Agent sent automated capacity requests to 4 carriers at 08:44 UTC. Awaiting responses from 2 carriers to finalize consolidation scenario.
+          </div>
+          <div class="ip-progress">
+            <div class="ip-row">
+              <span class="ip-carrier">NordTrans GmbH — 3 units available (confirmed)</span>
+              <span class="ip-status-pill ips-received">✓ Received 08:51</span>
+            </div>
+            <div class="ip-row">
+              <span class="ip-carrier">SpeedCargo AG — capacity request sent</span>
+              <span class="ip-status-pill ips-waiting">⏳ Awaiting</span>
+            </div>
+            <div class="ip-row">
+              <span class="ip-carrier">FlexTrans Europe — capacity request sent</span>
+              <span class="ip-status-pill ips-waiting">⏳ Awaiting</span>
+            </div>
+            <div class="ip-row">
+              <span class="ip-carrier">AlpineFreight AG — no MUC-HAM coverage</span>
+              <span class="ip-status-pill" style="background:var(--bg);border-color:var(--border);color:var(--text-3)">Not eligible</span>
             </div>
           </div>
-          <div class="ai-text">
-            Split load: <strong>SpeedCargo AG (3 units)</strong> + <strong>NordTrans GmbH (2 units)</strong>.
-            Net additional cost <strong>+€740</strong> vs penalty avoided <strong>€8,600</strong> — <span class="saving">net saving €7,860</span>.
-          </div>
         </div>
-        <div>
-          <button class="explain-toggle" onclick="toggleExplain(this)">Why this recommendation? <span class="toggle-chevron">▾</span></button>
-          <div class="explain-body">
-            <ul class="reason-list" style="margin-top:10px;">
-              <li><strong>No single carrier:</strong> No available carrier has full capacity for 5 units same-day on MUC-HAM</li>
-              <li><strong>Best split:</strong> SpeedCargo (3 units, OTD 87%) + NordTrans (2 units, OTD 91%) — both confirmed capacity</li>
-              <li><strong>Cost vs risk:</strong> Split premium €148/unit avg vs €1,720/unit SLA penalty — clearly favors split routing</li>
-              <li><strong>Coordination overhead:</strong> System auto-generates dual booking confirmation; no planner action required post-approval</li>
-            </ul>
-          </div>
-        </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="card-actions" id="actions-1853">
-          <button class="btn btn-primary" onclick="handleAccept('1853', 8600, 5, '✓ Split routing approved. SpeedCargo + NordTrans bookings initiated.')">✓ Accept Recommendation</button>
+          <button class="btn btn-success" onclick="handleAccept('1853', 8600, 5, '✓ Split routing approved. NordTrans + available carrier bookings initiated.')">✓ Accept Best Available (NordTrans split)</button>
           <button class="btn btn-outline" onclick="handleOverwrite('1853')">✎ Override</button>
-          <button class="btn btn-ghost" onclick="handleInfo()">Request More Info</button>
+          <button class="btn btn-warning" onclick="handleRequestInfo('1853')">⏳ Check Response Status</button>
         </div>
         <div class="override-row" id="override-1853">
           <input class="override-input" id="override-text-1853" placeholder="Describe your routing decision and rationale…"/>
           <button class="btn-confirm" onclick="confirmOverride('1853', 8600, 5)">Confirm Override</button>
+          <button class="btn btn-ghost" onclick="cancelOverride('1853')">✕</button>
+        </div>
+        <div class="resolved-banner" id="banner-1853">
+          <span>✓</span><span id="banner-text-1853">Accepted.</span>
         </div>
       </div>
     </div>
 
-    <!-- EX-1850 High: Transit Delay -->
+    <!-- ═══════════════════════════════════════════════
+         EX-1850  High · Transit Delay
+         State: AI recommendation ready → Awaiting Approval
+    ════════════════════════════════════════════════ -->
     <div class="exc-card" id="card-1850">
       <div class="card-stripe stripe-high"></div>
       <div class="card-body">
@@ -403,15 +521,16 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           <div>
             <div class="card-id-row">
               <span class="card-id">EX-2026-1850</span>
-              <span class="card-carrier">SpeedCargo AG · Detected 07:55 UTC</span>
+              <span class="card-carrier">SpeedCargo AG · 07:55 UTC</span>
             </div>
-            <div class="card-title">Transit Delay &gt;4h — MUC-DUS</div>
+            <div class="card-title">Transit Delay &gt;4h — MUC-DUS, Motorway Incident</div>
           </div>
           <div class="badges">
             <span class="pill pill-high">High</span>
             <span class="pill pill-blue">Awaiting Approval</span>
           </div>
         </div>
+
         <div class="impact-grid">
           <div class="impact-cell">
             <div class="impact-lbl">Affected Shipments</div>
@@ -419,47 +538,69 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
             <div class="impact-sub">MUC-DUS lane</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">SLA Penalty Exposure</div>
+            <div class="impact-lbl">Penalty Exposure</div>
             <div class="impact-num penalty">€3,200</div>
-            <div class="impact-sub">Tier 2 contract, delayed SLA</div>
+            <div class="impact-sub">Tier 2 delayed SLA</div>
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">Current Delay</div>
-            <div class="impact-num deadline">4h 22m</div>
-            <div class="impact-sub">Motorway incident A3</div>
+            <div class="impact-num amber">4h 22m</div>
+            <div class="impact-sub">A3 incident, clearance unknown</div>
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">AI Confidence</div>
-            <div class="impact-num">87 / 100</div>
-            <div class="impact-sub">High confidence</div>
+            <div class="impact-num">87/100</div>
+            <div class="impact-sub">Order Priority Agent ✓</div>
           </div>
         </div>
+
         <div class="ai-box">
           <div class="ai-header">
-            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation</div>
-            <div class="confidence-bar-wrap">
-              <div class="conf-bar-track"><div class="conf-bar-fill" style="width:87%"></div></div>
-              <span class="conf-label">87%</span>
+            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation — Impact Simulation Agent</div>
+            <div class="conf-wrap">
+              <div class="conf-track"><div class="conf-fill" style="width:87%"></div></div>
+              <span class="conf-pct">87%</span>
             </div>
           </div>
           <div class="ai-text">
-            Notify customer with revised ETA and issue proactive SLA credit of <strong>€320</strong> (10% of exposure).
-            Customer satisfaction history shows <strong>82% acceptance rate</strong> for proactive credits on this lane.
+            Notify customer proactively with revised ETA and issue <strong>€320 goodwill SLA credit</strong> (10% of exposure).
+            <strong>Order Priority Agent:</strong> Customer is Tier 2 — penalty clock starts at +6h delay (1h 38m buffer remaining).
+            Historical data: 82% acceptance rate for proactive credits on MUC-DUS.
           </div>
         </div>
+
+        <button class="explain-toggle" onclick="toggleExplain(this)">
+          Why this recommendation? <span class="toggle-chevron">▾</span>
+        </button>
+        <div class="explain-body">
+          <ul class="reason-list">
+            <li><strong>Carrier Performance Agent:</strong> SpeedCargo A3 route has 3 prior incidents this quarter — pattern indicates extended delays (avg +2.8h after initial report)</li>
+            <li><strong>Order Priority Agent:</strong> Customer Tier 2 SLA — penalty threshold at 6h delay, not 4h. €320 proactive credit within authority limit</li>
+            <li><strong>Impact Simulation Agent:</strong> Rerouting cost (+€540) exceeds penalty (€3,200 × 10% = €320) — proactive credit is more cost-effective</li>
+          </ul>
+        </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="card-actions" id="actions-1850">
-          <button class="btn btn-primary" onclick="handleAccept('1850', 3200, 3, '✓ Proactive SLA credit approved. Customer notification sent.')">✓ Accept Recommendation</button>
+          <button class="btn btn-success" onclick="handleAccept('1850', 3200, 3, '✓ Proactive SLA credit approved. Customer notified with revised ETA.')">✓ Accept Recommendation</button>
           <button class="btn btn-outline" onclick="handleOverwrite('1850')">✎ Override</button>
-          <button class="btn btn-ghost" onclick="handleInfo()">Request More Info</button>
+          <button class="btn btn-ghost" onclick="handleRequestInfo('1850')">⊕ Request More Info</button>
         </div>
         <div class="override-row" id="override-1850">
-          <input class="override-input" id="override-text-1850" placeholder="Describe your decision and rationale…"/>
+          <input class="override-input" id="override-text-1850" placeholder="Describe your decision…"/>
           <button class="btn-confirm" onclick="confirmOverride('1850', 3200, 3)">Confirm Override</button>
+          <button class="btn btn-ghost" onclick="cancelOverride('1850')">✕</button>
+        </div>
+        <div class="resolved-banner" id="banner-1850">
+          <span>✓</span><span id="banner-text-1850">Accepted.</span>
         </div>
       </div>
     </div>
 
-    <!-- EX-1831 High: Customs Hold -->
+    <!-- ═══════════════════════════════════════════════
+         EX-1831  High · Customs Hold
+         State: In Progress (broker already engaged by system)
+    ════════════════════════════════════════════════ -->
     <div class="exc-card" id="card-1831">
       <div class="card-stripe stripe-high"></div>
       <div class="card-body">
@@ -467,15 +608,16 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           <div>
             <div class="card-id-row">
               <span class="card-id">EX-2026-1831</span>
-              <span class="card-carrier">EuroFreight AG · Detected 14:22 UTC, Apr 23</span>
+              <span class="card-carrier">EuroFreight AG · Apr 23, 14:22 UTC</span>
             </div>
-            <div class="card-title">Customs Hold — HS Code Mismatch</div>
+            <div class="card-title">Customs Hold — HS Code Mismatch, MUC-FRA</div>
           </div>
           <div class="badges">
             <span class="pill pill-high">High</span>
             <span class="pill pill-purple">In Progress</span>
           </div>
         </div>
+
         <div class="impact-grid">
           <div class="impact-cell">
             <div class="impact-lbl">Affected Shipments</div>
@@ -483,47 +625,58 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
             <div class="impact-sub">MUC-FRA lane</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">SLA Penalty Exposure</div>
+            <div class="impact-lbl">Penalty Exposure</div>
             <div class="impact-num" style="color:var(--text-2)">€0</div>
             <div class="impact-sub">Within SLA window</div>
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">Time Open</div>
-            <div class="impact-num deadline">19h 12m</div>
+            <div class="impact-num amber">19h 12m</div>
             <div class="impact-sub">Since Apr 23 14:22</div>
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">AI Confidence</div>
-            <div class="impact-num">88 / 100</div>
-            <div class="impact-sub">High confidence</div>
+            <div class="impact-num">88/100</div>
+            <div class="impact-sub">Exception Triage ✓</div>
           </div>
         </div>
+
         <div class="ai-box">
           <div class="ai-header">
-            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation</div>
-            <div class="confidence-bar-wrap">
-              <div class="conf-bar-track"><div class="conf-bar-fill" style="width:88%"></div></div>
-              <span class="conf-label">88%</span>
+            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation — Exception Triage Agent</div>
+            <div class="conf-wrap">
+              <div class="conf-track"><div class="conf-fill" style="width:88%"></div></div>
+              <span class="conf-pct">88%</span>
             </div>
           </div>
           <div class="ai-text">
-            Contact customs broker <strong>Müller &amp; Partner GmbH</strong> — corrected HS code documentation is ready to submit.
-            Expected clearance <strong>within 4 hours</strong> based on 23 similar holds resolved on this lane.
+            <strong>System action already initiated:</strong> Corrected HS code documentation prepared automatically and sent to customs broker <strong>Müller &amp; Partner GmbH</strong> at 14:35 UTC yesterday.
+            Expected clearance <strong>within 4 hours</strong> (based on 23 similar holds on MUC-FRA, avg 3.8h via this broker).
+            Planner confirmation required to log resolution intent.
           </div>
         </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="card-actions" id="actions-1831">
-          <button class="btn btn-primary" onclick="handleAccept('1831', 0, 2, '✓ Broker notified. Documentation submitted to customs.')">✓ Accept Recommendation</button>
-          <button class="btn btn-outline" onclick="handleOverwrite('1831')">✎ Override</button>
-          <button class="btn btn-ghost" onclick="handleInfo()">Request More Info</button>
+          <button class="btn btn-success" onclick="handleAccept('1831', 0, 2, '✓ Confirmed. Broker action logged. Monitoring for customs clearance.')">✓ Confirm &amp; Monitor</button>
+          <button class="btn btn-outline" onclick="handleOverwrite('1831')">✎ Escalate Manually</button>
+          <button class="btn btn-ghost" onclick="handleRequestInfo('1831')">⊕ Request Update from Broker</button>
         </div>
         <div class="override-row" id="override-1831">
-          <input class="override-input" id="override-text-1831" placeholder="Describe your decision and rationale…"/>
-          <button class="btn-confirm" onclick="confirmOverride('1831', 0, 2)">Confirm Override</button>
+          <input class="override-input" id="override-text-1831" placeholder="Escalation notes…"/>
+          <button class="btn-confirm" onclick="confirmOverride('1831', 0, 2)">Confirm Escalation</button>
+          <button class="btn btn-ghost" onclick="cancelOverride('1831')">✕</button>
+        </div>
+        <div class="resolved-banner" id="banner-1831">
+          <span>✓</span><span id="banner-text-1831">Confirmed.</span>
         </div>
       </div>
     </div>
 
-    <!-- EX-1828 Medium: Documentation Error -->
+    <!-- ═══════════════════════════════════════════════
+         EX-1828  Medium · Documentation Error
+         State: AI recommendation ready → Awaiting Approval
+    ════════════════════════════════════════════════ -->
     <div class="exc-card" id="card-1828">
       <div class="card-stripe stripe-medium"></div>
       <div class="card-body">
@@ -531,15 +684,16 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           <div>
             <div class="card-id-row">
               <span class="card-id">EX-2026-1828</span>
-              <span class="card-carrier">AlphaLogistics GmbH · Detected 06:30 UTC</span>
+              <span class="card-carrier">AlphaLogistics GmbH · 06:30 UTC</span>
             </div>
-            <div class="card-title">Documentation Error — CMR Missing</div>
+            <div class="card-title">Documentation Error — CMR Waybill Missing, FRA-VIE</div>
           </div>
           <div class="badges">
             <span class="pill pill-medium">Medium</span>
             <span class="pill pill-blue">Awaiting Approval</span>
           </div>
         </div>
+
         <div class="impact-grid">
           <div class="impact-cell">
             <div class="impact-lbl">Affected Shipments</div>
@@ -547,7 +701,7 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
             <div class="impact-sub">FRA-VIE lane</div>
           </div>
           <div class="impact-cell">
-            <div class="impact-lbl">SLA Penalty Exposure</div>
+            <div class="impact-lbl">Penalty Exposure</div>
             <div class="impact-num penalty">€800</div>
             <div class="impact-sub">Tier 3 customer</div>
           </div>
@@ -558,43 +712,51 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           </div>
           <div class="impact-cell">
             <div class="impact-lbl">AI Confidence</div>
-            <div class="impact-num">82 / 100</div>
+            <div class="impact-num">82/100</div>
             <div class="impact-sub">Good confidence</div>
           </div>
         </div>
+
         <div class="ai-box">
           <div class="ai-header">
-            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation</div>
-            <div class="confidence-bar-wrap">
-              <div class="conf-bar-track"><div class="conf-bar-fill" style="width:82%"></div></div>
-              <span class="conf-label">82%</span>
+            <div class="ai-label"><div class="ai-icon">✦</div> AI Recommendation — Exception Triage Agent</div>
+            <div class="conf-wrap">
+              <div class="conf-track"><div class="conf-fill" style="width:82%"></div></div>
+              <span class="conf-pct">82%</span>
             </div>
           </div>
           <div class="ai-text">
-            Auto-generate CMR from system records and submit digitally via <strong>e-CMR portal</strong>.
-            Carrier confirms receipt within <strong>30 minutes</strong>. No physical intervention needed.
+            Auto-generate CMR from shipment master data and submit digitally via <strong>e-CMR portal</strong>.
+            Carrier AlphaLogistics confirms receipt within <strong>30 minutes</strong>. No physical intervention needed.
+            Cost of action: <strong>€0</strong>.
           </div>
         </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="card-actions" id="actions-1828">
-          <button class="btn btn-primary" onclick="handleAccept('1828', 800, 1, '✓ CMR auto-generated and submitted via e-CMR portal.')">✓ Accept Recommendation</button>
+          <button class="btn btn-success" onclick="handleAccept('1828', 800, 1, '✓ CMR auto-generated and submitted via e-CMR portal. Carrier notified.')">✓ Accept — Auto-generate CMR</button>
           <button class="btn btn-outline" onclick="handleOverwrite('1828')">✎ Override</button>
-          <button class="btn btn-ghost" onclick="handleInfo()">Request More Info</button>
+          <button class="btn btn-ghost" onclick="handleRequestInfo('1828')">⊕ Request More Info</button>
         </div>
         <div class="override-row" id="override-1828">
-          <input class="override-input" id="override-text-1828" placeholder="Describe your decision and rationale…"/>
+          <input class="override-input" id="override-text-1828" placeholder="Describe your decision…"/>
           <button class="btn-confirm" onclick="confirmOverride('1828', 800, 1)">Confirm Override</button>
+          <button class="btn btn-ghost" onclick="cancelOverride('1828')">✕</button>
+        </div>
+        <div class="resolved-banner" id="banner-1828">
+          <span>✓</span><span id="banner-text-1828">Accepted.</span>
         </div>
       </div>
     </div>
 
-    <!-- Empty state (shown when all resolved) -->
+    <!-- Empty state -->
     <div class="empty-state" id="empty-state">
       <div class="empty-icon">✓</div>
       <div class="empty-title">All exceptions resolved</div>
-      <div class="empty-sub">Great work — inbox cleared. Next refresh in 5 minutes.</div>
+      <div class="empty-sub">Inbox cleared. Next automated check in 5 minutes.</div>
     </div>
 
-  </div><!-- /main -->
+  </div><!-- /content -->
 
   <!-- Sidebar -->
   <div class="sidebar">
@@ -606,14 +768,14 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       <div class="sidebar-heading">Outcome Distribution</div>
       <div class="donut-container">
         <div class="donut-wrap">
-          <svg width="86" height="86" viewBox="0 0 86 86">
-            <circle cx="43" cy="43" r="32" fill="none" stroke="#F3F4F6" stroke-width="10"/>
-            <circle cx="43" cy="43" r="32" fill="none" stroke="#059669" stroke-width="10"
-              id="donut-acc" stroke-dasharray="161 201" stroke-dashoffset="50" transform="rotate(-90 43 43)"/>
-            <circle cx="43" cy="43" r="32" fill="none" stroke="#D97706" stroke-width="10"
-              id="donut-ovr" stroke-dasharray="27 201" stroke-dashoffset="-111" transform="rotate(-90 43 43)"/>
-            <circle cx="43" cy="43" r="32" fill="none" stroke="#9CA3AF" stroke-width="10"
-              id="donut-esc" stroke-dasharray="13 201" stroke-dashoffset="-138" transform="rotate(-90 43 43)"/>
+          <svg width="84" height="84" viewBox="0 0 84 84">
+            <circle cx="42" cy="42" r="31" fill="none" stroke="#F3F4F6" stroke-width="10"/>
+            <circle cx="42" cy="42" r="31" fill="none" stroke="#059669" stroke-width="10"
+              id="donut-acc" stroke-dasharray="155 195" stroke-dashoffset="49" transform="rotate(-90 42 42)"/>
+            <circle cx="42" cy="42" r="31" fill="none" stroke="#D97706" stroke-width="10"
+              id="donut-ovr" stroke-dasharray="26 195" stroke-dashoffset="-106" transform="rotate(-90 42 42)"/>
+            <circle cx="42" cy="42" r="31" fill="none" stroke="#9CA3AF" stroke-width="10"
+              id="donut-esc" stroke-dasharray="14 195" transform="rotate(-90 42 42)" stroke-dashoffset="-132"/>
           </svg>
           <div class="donut-center">
             <div class="donut-pct" id="donut-pct">80%</div>
@@ -621,18 +783,9 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
           </div>
         </div>
         <div class="donut-legend">
-          <div class="legend-row">
-            <div class="legend-left"><span class="l-dot l-accepted"></span>Accepted</div>
-            <span class="legend-count" id="leg-acc">12</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-left"><span class="l-dot l-overwrite"></span>Overwritten</div>
-            <span class="legend-count" id="leg-ovr">2</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-left"><span class="l-dot l-escalated"></span>Escalated</div>
-            <span class="legend-count" id="leg-esc">1</span>
-          </div>
+          <div class="legend-row"><div class="legend-left"><span class="l-dot l-accepted"></span>Accepted</div><span class="legend-count" id="leg-acc">12</span></div>
+          <div class="legend-row"><div class="legend-left"><span class="l-dot l-overwrite"></span>Overridden</div><span class="legend-count" id="leg-ovr">2</span></div>
+          <div class="legend-row"><div class="legend-left"><span class="l-dot l-escalated"></span>Escalated</div><span class="legend-count" id="leg-esc">1</span></div>
         </div>
       </div>
     </div>
@@ -650,44 +803,67 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       <div class="recent-list" id="recent-list"></div>
     </div>
   </div>
-</div>
+</div><!-- /layout -->
 
 <div class="toast" id="toast"></div>
 
 <script>
 // ── State ──
-let openCount = 5;
-let totalExposure = 27000;
-let totalShips = 25;
-let resolvedCount = 0;
-const CIRC = 2 * Math.PI * 32;
+let openCount = 5, totalExposure = 27000, totalShips = 25, resolvedCount = 0;
+const CIRC = 2 * Math.PI * 31;
 
 const SIDEBAR_DATA = {
   "Carrier Cancellation": {
     accepted: 12, overwritten: 2, escalated: 1, total: 15, time: "4.2 min", saving: "€11.2k", success: "94%",
     recent: [
-      { id: "EX-2026-1821", outcome: "accepted",   detail: "€12,800 avoided · AlphaLogistics" },
-      { id: "EX-2026-1804", outcome: "accepted",   detail: "€9,600 avoided · AlphaLogistics" },
+      { id: "EX-2026-1821", outcome: "accepted",    detail: "€12,800 avoided · AlphaLogistics" },
+      { id: "EX-2026-1804", outcome: "accepted",    detail: "€9,600 avoided · AlphaLogistics" },
       { id: "EX-2026-1789", outcome: "overwritten", detail: "Manual: DirectFreight AG selected" },
-      { id: "EX-2026-1763", outcome: "accepted",   detail: "€14,400 avoided · AlphaLogistics" },
-    ]
-  },
-  "Customs Hold": {
-    accepted: 8, overwritten: 1, escalated: 1, total: 10, time: "6.8 min", saving: "€4.2k", success: "89%",
-    recent: [
-      { id: "EX-2026-1808", outcome: "accepted",   detail: "Broker cleared in 3.5h" },
-      { id: "EX-2026-1791", outcome: "accepted",   detail: "Broker cleared in 4.1h" },
-      { id: "EX-2026-1774", outcome: "overwritten", detail: "Escalated to customs manager" },
+      { id: "EX-2026-1763", outcome: "accepted",    detail: "€14,400 avoided · AlphaLogistics" },
     ]
   },
   "Capacity Shortfall": {
     accepted: 7, overwritten: 2, escalated: 0, total: 9, time: "3.8 min", saving: "€6.9k", success: "91%",
     recent: [
-      { id: "EX-2026-1810", outcome: "accepted",   detail: "Split: NordTrans + SpeedCargo" },
-      { id: "EX-2026-1799", outcome: "accepted",   detail: "€7,200 avoided · NordTrans" },
+      { id: "EX-2026-1810", outcome: "accepted",    detail: "Split: NordTrans + SpeedCargo" },
+      { id: "EX-2026-1799", outcome: "accepted",    detail: "€7,200 avoided · NordTrans" },
+      { id: "EX-2026-1778", outcome: "overwritten", detail: "Manual: single carrier override" },
+    ]
+  },
+  "Transit Delay": {
+    accepted: 9, overwritten: 1, escalated: 1, total: 11, time: "2.1 min", saving: "€2.8k", success: "89%",
+    recent: [
+      { id: "EX-2026-1840", outcome: "accepted",    detail: "Proactive credit issued, customer satisfied" },
+      { id: "EX-2026-1823", outcome: "accepted",    detail: "€480 SLA credit · MUC-DUS" },
+      { id: "EX-2026-1801", outcome: "overwritten", detail: "Manual reroute chosen instead" },
+    ]
+  },
+  "Customs Hold": {
+    accepted: 8, overwritten: 1, escalated: 1, total: 10, time: "6.8 min", saving: "€4.2k", success: "89%",
+    recent: [
+      { id: "EX-2026-1808", outcome: "accepted",    detail: "Broker cleared in 3.5h" },
+      { id: "EX-2026-1791", outcome: "accepted",    detail: "Broker cleared in 4.1h" },
+      { id: "EX-2026-1774", outcome: "overwritten", detail: "Escalated to customs manager" },
+    ]
+  },
+  "Documentation Error": {
+    accepted: 14, overwritten: 0, escalated: 0, total: 14, time: "1.2 min", saving: "€0.8k", success: "100%",
+    recent: [
+      { id: "EX-2026-1820", outcome: "accepted",    detail: "CMR auto-generated, carrier confirmed" },
+      { id: "EX-2026-1796", outcome: "accepted",    detail: "CMR auto-generated, no delay" },
     ]
   }
 };
+
+const cardTypes = {
+  '1847': 'Carrier Cancellation',
+  '1853': 'Capacity Shortfall',
+  '1850': 'Transit Delay',
+  '1831': 'Customs Hold',
+  '1828': 'Documentation Error',
+};
+const cardExposure = { '1847': 14400, '1853': 8600, '1850': 3200, '1831': 0, '1828': 800 };
+const cardShips    = { '1847': 14,    '1853': 5,     '1850': 3,    '1831': 2,  '1828': 1 };
 
 function updateSidebar(type) {
   const d = SIDEBAR_DATA[type] || SIDEBAR_DATA["Carrier Cancellation"];
@@ -699,12 +875,12 @@ function updateSidebar(type) {
   const pct = Math.round(d.accepted / t * 100);
   document.getElementById("donut-pct").textContent = pct + "%";
   document.getElementById("donut-acc").setAttribute("stroke-dasharray", `${accLen.toFixed(1)} ${CIRC.toFixed(1)}`);
-  const ovrOffset = -(accLen - CIRC * 0.25);
-  const escOffset = -(accLen + ovrLen - CIRC * 0.25);
+  const ovrOff = -(accLen - CIRC * 0.25);
+  const escOff = -(accLen + ovrLen - CIRC * 0.25);
   document.getElementById("donut-ovr").setAttribute("stroke-dasharray", `${ovrLen.toFixed(1)} ${CIRC.toFixed(1)}`);
-  document.getElementById("donut-ovr").setAttribute("stroke-dashoffset", ovrOffset.toFixed(1));
+  document.getElementById("donut-ovr").setAttribute("stroke-dashoffset", ovrOff.toFixed(1));
   document.getElementById("donut-esc").setAttribute("stroke-dasharray", `${escLen.toFixed(1)} ${CIRC.toFixed(1)}`);
-  document.getElementById("donut-esc").setAttribute("stroke-dashoffset", escOffset.toFixed(1));
+  document.getElementById("donut-esc").setAttribute("stroke-dashoffset", escOff.toFixed(1));
   document.getElementById("leg-acc").textContent = d.accepted;
   document.getElementById("leg-ovr").textContent = d.overwritten;
   document.getElementById("leg-esc").textContent = d.escalated;
@@ -716,41 +892,80 @@ function updateSidebar(type) {
     <div class="recent-item">
       <div class="recent-top">
         <span class="recent-id">${r.id}</span>
-        <span class="recent-pill ${r.outcome === 'accepted' ? 'rp-accepted' : 'rp-overwrite'}">${r.outcome === 'accepted' ? '✓ Accepted' : 'Overwritten'}</span>
+        <span class="recent-pill ${r.outcome === 'accepted' ? 'rp-accepted' : 'rp-overwrite'}">${r.outcome === 'accepted' ? '✓ Accepted' : 'Overridden'}</span>
       </div>
       <div class="recent-detail">${r.detail}</div>
     </div>`).join('');
 }
 
-// ── Update KPI strip ──
+// Wire sidebar to hover
+document.querySelectorAll('.exc-card').forEach(card => {
+  const id = card.id.replace('card-', '');
+  card.addEventListener('mouseenter', () => updateSidebar(cardTypes[id] || 'Carrier Cancellation'));
+});
+
+// ── Accept ──
+function handleAccept(id, exposure, ships, msg) {
+  const card = document.getElementById('card-' + id);
+  card.style.maxHeight = card.offsetHeight + 'px';
+  card.offsetHeight;
+  card.style.maxHeight = '0';
+  card.style.opacity = '0';
+  card.style.overflow = 'hidden';
+  card.style.transition = 'max-height 0.5s ease, opacity 0.4s ease, margin 0.5s ease';
+  card.style.marginBottom = '0';
+
+  setTimeout(() => {
+    card.style.display = 'none';
+    openCount--;
+    totalExposure = Math.max(0, totalExposure - exposure);
+    totalShips    = Math.max(0, totalShips - ships);
+    resolvedCount++;
+    updateKPIs();
+    if (openCount === 0) document.getElementById('empty-state').classList.add('visible');
+  }, 500);
+
+  showToast(msg);
+}
+
+function handleOverwrite(id) {
+  const row = document.getElementById('override-' + id);
+  row.classList.add('visible');
+  document.getElementById('override-text-' + id).focus();
+  document.getElementById('actions-' + id).style.display = 'none';
+}
+
+function cancelOverride(id) {
+  document.getElementById('override-' + id).classList.remove('visible');
+  document.getElementById('actions-' + id).style.display = '';
+}
+
+function confirmOverride(id, exposure, ships) {
+  const val = document.getElementById('override-text-' + id).value.trim();
+  if (!val) { document.getElementById('override-text-' + id).focus(); return; }
+  handleAccept(id, exposure, ships, '✎ Override logged: ' + val.substring(0, 60));
+}
+
+function handleRequestInfo(id) {
+  showToast('⊕ Request sent to logistics operations team. Response expected within 15 min.');
+}
+
+function toggleExplain(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
 function updateKPIs() {
   const openEl = document.getElementById('kpi-open');
-  const expEl = document.getElementById('kpi-exposure');
-  const shipsEl = document.getElementById('kpi-ships');
-  const resEl = document.getElementById('kpi-resolved');
-
   openEl.textContent = openCount;
-  expEl.textContent = '€' + totalExposure.toLocaleString();
-  shipsEl.textContent = totalShips;
+  openEl.classList.remove('bump'); void openEl.offsetWidth; openEl.classList.add('bump');
+  document.getElementById('kpi-exposure').textContent = '€' + totalExposure.toLocaleString();
+  document.getElementById('kpi-ships').textContent = totalShips;
+  const resEl = document.getElementById('kpi-resolved');
   resEl.textContent = resolvedCount;
-
-  // Update badge
+  resEl.classList.remove('bump'); void resEl.offsetWidth; resEl.classList.add('bump');
   document.getElementById('badge-text').textContent = openCount > 0 ? openCount + ' Requiring Action' : 'All Clear';
-  if (openCount === 0) {
-    document.querySelector('.badge-live').style.background = 'var(--success-bg)';
-    document.querySelector('.badge-live').style.borderColor = 'var(--success-border)';
-    document.querySelector('.badge-live').style.color = 'var(--success)';
-    document.querySelector('.badge-dot').style.background = 'var(--success)';
-  }
-
-  // Update filter counts
-  const cards = document.querySelectorAll('.exc-card:not(.collapsing)');
   document.getElementById('fc-all').textContent = openCount;
-
-  // Animate resolved counter
-  resEl.classList.remove('bump');
-  void resEl.offsetWidth;
-  resEl.classList.add('bump');
 }
 
 function showToast(msg) {
@@ -760,84 +975,22 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-// ── Accept ──
-function handleAccept(id, exposure, ships, msg) {
-  const card = document.getElementById('card-' + id);
-  card.style.maxHeight = card.offsetHeight + 'px';
-  card.style.overflow = 'hidden';
-  card.offsetHeight; // reflow
-  card.classList.add('collapsing');
-
-  setTimeout(() => {
-    card.style.display = 'none';
-    openCount--;
-    totalExposure -= exposure;
-    totalShips -= ships;
-    resolvedCount++;
-    updateKPIs();
-    if (openCount === 0) document.getElementById('empty-state').classList.add('visible');
-  }, 450);
-
-  showToast(msg);
-}
-
-function handleOverwrite(id) {
-  const row = document.getElementById('override-' + id);
-  row.classList.toggle('visible');
-  if (row.classList.contains('visible')) document.getElementById('override-text-' + id).focus();
-}
-
-function confirmOverride(id, exposure, ships) {
-  const val = document.getElementById('override-text-' + id).value.trim();
-  if (!val) { document.getElementById('override-text-' + id).focus(); return; }
-  handleAccept(id, exposure, ships, '✎ Override logged — ' + val.substring(0, 50));
-}
-
-function handleInfo() {
-  showToast('Request sent to logistics operations team. Response expected in 15 min.');
-}
-
-function toggleExplain(btn) {
-  btn.classList.toggle('open');
-  btn.nextElementSibling.classList.toggle('open');
-}
-
-// ── Filter pills ──
+// ── Filter ──
 let activeFilter = 'all';
+const cardSeverity = { '1847':'critical', '1853':'high', '1850':'high', '1831':'high', '1828':'medium' };
+const cardStatus   = { '1847':'awaiting', '1853':'input', '1850':'awaiting', '1831':'inprogress', '1828':'awaiting' };
+
 function setFilter(filter, el) {
   document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   activeFilter = filter;
-
-  const cards = document.querySelectorAll('.exc-card');
-  const severityMap = { '1847': 'Critical', '1853': 'High', '1850': 'High', '1831': 'High', '1828': 'Medium' };
-  const statusMap   = { '1847': 'awaiting', '1853': 'awaiting', '1850': 'awaiting', '1831': 'inprogress', '1828': 'awaiting' };
-
-  cards.forEach(card => {
-    if (card.id === 'empty-state') return;
-    if (card.style.display === 'none') return;
-    const id = card.id.replace('card-', '');
-    if (filter === 'all') { card.style.display = ''; return; }
-    const sev = severityMap[id] || '';
-    const status = statusMap[id] || '';
-    card.style.display = (sev === filter || status === filter) ? '' : 'none';
+  ['1847','1853','1850','1831','1828'].forEach(id => {
+    const card = document.getElementById('card-' + id);
+    if (!card || card.style.display === 'none') return;
+    const show = filter === 'all' || cardSeverity[id] === filter || cardStatus[id] === filter;
+    card.style.display = show ? '' : 'none';
   });
 }
-
-// Sidebar follows hovered card
-document.querySelectorAll('.exc-card').forEach(card => {
-  const titleMap = {
-    'card-1847': 'Carrier Cancellation',
-    'card-1853': 'Capacity Shortfall',
-    'card-1850': 'Carrier Cancellation',
-    'card-1831': 'Customs Hold',
-    'card-1828': 'Carrier Cancellation',
-  };
-  card.addEventListener('mouseenter', () => {
-    const type = titleMap[card.id] || 'Carrier Cancellation';
-    updateSidebar(type);
-  });
-});
 
 // Init
 updateSidebar('Carrier Cancellation');
