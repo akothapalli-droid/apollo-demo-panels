@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Active Exceptions — Transport Orchestration</title>
+<style>
+  :root {
+    --bg-page:        #1A1F2E;
+    --bg-card:        #242938;
+    --bg-card-hover:  #2C3245;
+    --bg-input:       #1E2435;
+    --border:         #3A3F52;
+    --border-subtle:  #2E3347;
+    --text-primary:   #E8EAF0;
+    --text-secondary: #9AA0B8;
+    --text-muted:     #6B7290;
+    --highlight-70:   #C0392B;
+    --highlight-50:   #E67E22;
+    --primary-60:     #1A6FBA;
+    --primary-50:     #2980B9;
+    --primary-30:     #5DADE2;
+    --context-40:     #2ECC71;
+    --context-20:     #A9CCE3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    padding: 12px;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 12px;
+  }
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--highlight-50);
+    border-radius: 2px;
+  }
+  .panel-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .card.resolved .card-title-text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .urgency-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-critical { background: var(--highlight-70); color: #fff; }
+  .badge-high     { background: var(--highlight-50); color: #fff; }
+  .badge-medium   { background: var(--primary-50);   color: #fff; }
+  .badge-low      { background: var(--context-20);   color: #1A1F2E; }
+  .protocol-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+  }
+  .protocol-steps {
+    padding-left: 16px;
+    margin-bottom: 2px;
+  }
+  .protocol-steps li {
+    font-size: 12px;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+  .action-group {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 11px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    transition: background 0.12s, opacity 0.12s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #3A3F52; }
+  .btn-primary {
+    background: var(--primary-60);
+    border-color: var(--primary-60);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-50); }
+  .btn.confirmed {
+    background: var(--context-40);
+    border-color: var(--context-40);
+    color: #fff;
+    cursor: default;
+  }
+  .btn.faded {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Active Exceptions</div>
+    <span class="panel-count">2 alerts</span>
+  </div>
+  
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="badge badge-critical">Critical</span>
+          &nbsp; Carrier Cancellation — EX-2024-1847
+        </div>
+        <span class="urgency-label">&nbsp;·&nbsp; 0d open</span>
+      </div>
+      <div class="financial-line">Penalty exposure: <strong>€14,400</strong></div>
+      <div class="protocol-label">Recommended Response:</div>
+      <ol class="protocol-steps"><li>Activate carrier replacement protocol — evaluate top-3 alternative carriers</li><li>Reroute all 14 affected shipments to AlphaLogistics (Scenario 1: Score 94/100)</li><li>Notify Tier 1 customers of delay and revised ETAs</li><li>Document resolution in exception log for SLA reporting</li></ol>
+      <div class="action-group"><button class="btn btn-primary" data-action="Acknowledge">Acknowledge</button><button class="btn" data-action="Escalate">Escalate</button><button class="btn" data-action="Mark Resolved">Mark Resolved</button></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="badge badge-high">High</span>
+          &nbsp; Customs Hold — EX-2024-1831
+        </div>
+        <span class="urgency-label">&nbsp;·&nbsp; 1d open</span>
+      </div>
+      
+      <div class="protocol-label">Recommended Response:</div>
+      <ol class="protocol-steps"><li>Contact customs broker immediately</li><li>Prepare corrected documentation package</li><li>Notify customer of potential clearance delay</li></ol>
+      <div class="action-group"><button class="btn btn-primary" data-action="Acknowledge">Acknowledge</button><button class="btn" data-action="Escalate">Escalate</button><button class="btn" data-action="Mark Resolved">Mark Resolved</button></div>
+    </div>
+</div>
+<script>
+  document.querySelectorAll('.btn[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.action-group');
+      const card = btn.closest('.card');
+      const label = btn.dataset.action;
+
+      btn.textContent = label + ' ✓';
+      btn.classList.add('confirmed');
+      group.querySelectorAll('.btn').forEach(b => {
+        if (b !== btn) b.classList.add('faded');
+      });
+
+      if (label === 'Mark Resolved' && card) {
+        card.classList.add('resolved');
+      }
+    });
+  });
+</script>
+</body>
+</html>
