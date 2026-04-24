@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -16,6 +15,7 @@
   --purple: #7C3AED; --purple-bg: #F5F3FF; --purple-border: #DDD6FE;
   --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --radius: 8px;
 }
 html, body { height: 100%; overflow: hidden; }
 body { display: flex; flex-direction: column; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; }
@@ -26,8 +26,8 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 .sh-title { font-size: 14px; font-weight: 600; }
 .sh-sub { font-size: 11px; color: var(--text-3); }
 .live-chip { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 20px; padding: 3px 10px; }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(5,150,105,0.4)}50%{opacity:.85;box-shadow:0 0 0 4px rgba(5,150,105,0)} }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: livepulse 2s ease-in-out infinite; }
+@keyframes livepulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(5,150,105,0.4)} 50%{opacity:.85;box-shadow:0 0 0 4px rgba(5,150,105,0)} }
 
 /* ── Layout ── */
 .page { display: flex; flex: 1; overflow: hidden; }
@@ -41,70 +41,95 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 /* ── Section label ── */
 .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
 
-/* ── Graph card ── */
-.graph-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
-.graph-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.graph-title { font-size: 13px; font-weight: 600; }
-.graph-controls { display: flex; gap: 6px; }
-.graph-btn { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text-2); font-family: inherit; transition: all 0.15s; }
-.graph-btn:hover { border-color: var(--primary); color: var(--primary); }
-.graph-btn.active { background: var(--primary-bg); border-color: var(--primary-border); color: var(--primary); }
-#graph-svg { width: 100%; display: block; background: var(--bg); cursor: grab; }
-#graph-svg:active { cursor: grabbing; }
-.graph-legend { padding: 8px 16px; border-top: 1px solid var(--border); display: flex; gap: 16px; flex-wrap: wrap; }
-.lg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
-.lg-dot { width: 9px; height: 9px; border-radius: 50%; }
+/* ── Pipeline card ── */
+.pipeline-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.pipeline-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.pipeline-title { font-size: 13px; font-weight: 600; }
+.pipeline-meta { font-size: 11px; color: var(--text-3); }
+.pipeline-body { padding: 20px 16px; }
 
-/* ── Agent flow ── */
-.flow-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: 16px; }
-.flow-row { display: flex; align-items: center; gap: 0; }
-.agent-node {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; width: 120px; flex-shrink: 0; cursor: pointer;
+/* ── Horizontal step flow ── */
+.step-flow { display: flex; align-items: center; gap: 0; }
+.step-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
+.step-circle {
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
   transition: all 0.2s; position: relative;
 }
-.agent-node:hover { box-shadow: var(--shadow-md); border-color: var(--text-3); }
-.agent-node.done  { border-color: var(--success); background: var(--success-bg); }
-.agent-node.running { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 3px rgba(22,105,245,0.1); }
-.agent-node.waiting { border-color: var(--warning); border-style: dashed; }
-.agent-node.idle  { opacity: 0.55; }
-.node-icon { font-size: 16px; margin-bottom: 4px; }
-.node-name { font-size: 11px; font-weight: 700; line-height: 1.3; margin-bottom: 3px; }
-.node-status-row { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; }
-.ns-done    { color: var(--success); }
-.ns-running { color: var(--primary); }
-.ns-waiting { color: var(--warning); }
-.ns-idle    { color: var(--text-3); }
-.spin { animation: spin 1.2s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.flow-arrow { flex: 1; display: flex; align-items: center; justify-content: center; padding-top: 4px; }
-.arrow-svg { width: 32px; height: 20px; }
+.step-circle.done    { border-color: var(--success); background: var(--success-bg); }
+.step-circle.running { border-color: var(--primary); background: var(--primary-bg); box-shadow: 0 0 0 4px rgba(22,105,245,0.12); }
+.step-circle.waiting { border-color: var(--warning); background: var(--warning-bg); border-style: dashed; }
+.step-circle.idle    { border-color: var(--border); background: var(--bg); opacity: 0.6; }
+.step-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid white;
+  font-size: 8px; display: flex; align-items: center; justify-content: center;
+}
+.sb-done    { background: var(--success); color: white; }
+.sb-running { background: var(--primary); color: white; animation: spin 1s linear infinite; }
+.sb-waiting { background: var(--warning); color: white; }
+.step-name { font-size: 11px; font-weight: 600; color: var(--text-2); text-align: center; line-height: 1.3; }
+.step-time { font-size: 10px; color: var(--text-3); }
+.step-connector { flex: 0 0 28px; height: 2px; margin-top: -28px; }
+.sc-done    { background: var(--success); }
+.sc-running { background: linear-gradient(90deg, var(--success), var(--primary)); }
+.sc-idle    { background: var(--border); }
 
-/* ── Agent detail cards ── */
-.detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.2s; }
-.detail-card:hover { box-shadow: var(--shadow-md); }
-.detail-card.done    { border-top: 2px solid var(--success); }
-.detail-card.running { border-top: 2px solid var(--primary); }
-.detail-card.waiting { border-top: 2px solid var(--warning); border-style: dashed dashed solid solid; }
-.dc-header { display: flex; align-items: center; justify-content: space-between; }
-.dc-icon { font-size: 16px; }
-.dc-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; border: 1px solid; }
-.dcb-auto   { background: var(--primary-bg); border-color: var(--primary-border); color: var(--primary); }
-.dcb-loop   { background: var(--purple-bg);  border-color: var(--purple-border);  color: var(--purple); }
-.dcb-human  { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
-.dc-name { font-size: 12px; font-weight: 700; }
-.dc-desc { font-size: 11px; color: var(--text-3); line-height: 1.5; }
-.dc-metrics { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border-2); padding-top: 6px; }
-.dc-metric { display: flex; justify-content: space-between; font-size: 11px; }
-.dcm-key { color: var(--text-3); }
-.dcm-val { font-weight: 600; color: var(--text); }
-.dcm-val.running { color: var(--primary); }
-.dcm-val.pending { color: var(--text-3); }
+/* ── Step details table ── */
+.step-details { margin-top: 20px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.step-detail-row { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 14px; transition: background 0.15s; }
+.step-detail-row:last-child { border-bottom: none; }
+.step-detail-row:hover { background: var(--bg); }
+.step-detail-row.active { background: var(--primary-bg); }
+.sdr-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+.sdr-main { flex: 1; }
+.sdr-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.sdr-desc { font-size: 11px; color: var(--text-3); line-height: 1.4; }
+.sdr-status { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.sdr-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid; }
+.sp-done    { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+.sp-running { background: var(--primary-bg); border-color: var(--primary-border); color: var(--primary); }
+.sp-waiting { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning); }
+.sp-idle    { background: var(--bg); border-color: var(--border); color: var(--text-3); }
+.sdr-timing { font-size: 10px; color: var(--text-3); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+/* ── Scenario comparison ── */
+.scenario-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.sc-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.sc-title { font-size: 13px; font-weight: 600; }
+.sc-badge { font-size: 11px; font-weight: 600; color: var(--warning); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 20px; padding: 2px 9px; }
+.scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); }
+.sg-item { padding: 14px 16px; border-right: 1px solid var(--border); position: relative; }
+.sg-item:last-child { border-right: none; }
+.sg-item.recommended { background: #F0FDF4; }
+.sg-rec-badge { position: absolute; top: 10px; right: 10px; font-size: 10px; font-weight: 700; color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 20px; padding: 1px 7px; }
+.sg-num { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.sg-carrier { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.sg-metrics { display: flex; flex-direction: column; gap: 4px; }
+.sg-metric { display: flex; justify-content: space-between; font-size: 11px; }
+.sgm-key { color: var(--text-3); }
+.sgm-val { font-weight: 600; color: var(--text); }
+.sgm-val.good { color: var(--success); }
+.sgm-val.neutral { color: var(--text-2); }
+.sgm-val.bad { color: var(--critical); }
+.sg-score { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.sg-score-label { font-size: 11px; color: var(--text-3); }
+.sg-score-val { font-size: 16px; font-weight: 700; }
+.sg-score-val.top { color: var(--success); }
+.sg-score-val.mid { color: var(--text-2); }
+.sg-score-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.sg-score-fill { height: 100%; border-radius: 2px; }
+.fill-green { background: var(--success); }
+.fill-blue  { background: var(--primary); }
+.fill-gray  { background: var(--text-3); }
+.sc-footer { padding: 10px 16px; font-size: 11px; color: var(--text-3); display: flex; align-items: center; gap: 8px; }
+.sc-footer strong { color: var(--success); font-weight: 700; }
 
 /* ── Config panel ── */
 .config-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.config-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.config-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
 .config-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .config-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 0; }
 .ck { color: var(--text-2); }
@@ -113,7 +138,7 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 .cv.editable { color: var(--primary); background: var(--primary-bg); border: 1px solid var(--primary-border); border-radius: 4px; padding: 1px 7px; cursor: pointer; font-size: 11px; }
 .cv.editable:hover { background: #DBEAFE; }
 
-/* ── Right panel: run log ── */
+/* ── Right panel ── */
 .rp-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .rp-section:last-child { border-bottom: none; }
 .rp-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 10px; }
@@ -124,9 +149,10 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 .log-text .hl { font-weight: 600; color: var(--text); }
 .log-item.running .log-text .hl { color: var(--primary); }
 .log-item.done .log-time::before { content: '✓ '; color: var(--success); }
-.log-item.running .log-time::before { content: '◌ '; color: var(--primary); animation: spin 1.2s linear infinite; display: inline-block; }
+.log-item.running .log-time::before { content: ''; }
+.log-item.running .log-time { color: var(--primary); }
 .log-item.waiting .log-time::before { content: '⏸ '; color: var(--warning); }
-.metric-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+.metric-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 11px; }
 .mp-label { color: var(--text-3); }
 .mp-val { font-weight: 700; color: var(--text); }
 </style>
@@ -140,150 +166,197 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       <div class="sh-sub">Multi-agent exception resolution pipeline</div>
     </div>
   </div>
-  <div class="live-chip"><span class="live-dot"></span>Processing EX-2024-1847</div>
+  <div class="live-chip"><span class="live-dot"></span>Processing EX-2026-1847</div>
 </div>
 
 <div class="page">
   <div class="left-panel">
 
-    <!-- PIG Force Graph -->
-    <div class="section-label">Object Network — Transport Domain</div>
-    <div class="graph-card">
-      <div class="graph-header">
-        <div class="graph-title">Process Intelligence Graph</div>
-        <div class="graph-controls">
-          <button class="graph-btn active" id="btn-full" onclick="setView('full')">Full Network</button>
-          <button class="graph-btn" id="btn-exception" onclick="setView('exception')">Exception View</button>
-        </div>
+    <!-- Agent Pipeline -->
+    <div class="section-label">Agent Pipeline — EX-2026-1847</div>
+    <div class="pipeline-card">
+      <div class="pipeline-header">
+        <div class="pipeline-title">AI Orchestration Workflow</div>
+        <div class="pipeline-meta" id="elapsed-label">Elapsed: <span id="elapsed">12s</span></div>
       </div>
-      <svg id="graph-svg" height="240"></svg>
-      <div class="graph-legend">
-        <div class="lg-item"><span class="lg-dot" style="background:#1669F5"></span>Shipments (30)</div>
-        <div class="lg-item"><span class="lg-dot" style="background:#7C3AED"></span>Carriers (8)</div>
-        <div class="lg-item"><span class="lg-dot" style="background:#059669"></span>Lanes (6)</div>
-        <div class="lg-item"><span class="lg-dot" style="background:#D97706"></span>Customers (10)</div>
-        <div class="lg-item"><span class="lg-dot" style="background:#DC2626"></span>Exceptions (5)</div>
-      </div>
-    </div>
+      <div class="pipeline-body">
 
-    <!-- Agent flow -->
-    <div class="section-label">Agent Pipeline — EX-2024-1847</div>
-    <div class="flow-wrap">
-      <div class="flow-row">
-        <div class="agent-node done">
-          <div class="node-icon">🔍</div>
-          <div class="node-name">Detection</div>
-          <div class="node-status-row ns-done">✓ Done</div>
+        <!-- Step flow -->
+        <div class="step-flow">
+          <div class="step-item" onclick="selectStep(0)">
+            <div class="step-circle done">🔍<span class="step-badge sb-done">✓</span></div>
+            <div class="step-name">Detection</div>
+            <div class="step-time">0.2s</div>
+          </div>
+          <div class="step-connector sc-done"></div>
+          <div class="step-item" onclick="selectStep(1)">
+            <div class="step-circle done">📋<span class="step-badge sb-done">✓</span></div>
+            <div class="step-name">Triage</div>
+            <div class="step-time">0.6s</div>
+          </div>
+          <div class="step-connector sc-done"></div>
+          <div class="step-item" onclick="selectStep(2)">
+            <div class="step-circle done">🚚<span class="step-badge sb-done">✓</span></div>
+            <div class="step-name">Carrier Sourcing</div>
+            <div class="step-time">2.1s</div>
+          </div>
+          <div class="step-connector sc-running"></div>
+          <div class="step-item" onclick="selectStep(3)">
+            <div class="step-circle running">⚖️<span class="step-badge sb-running" id="eval-badge">◌</span></div>
+            <div class="step-name">Evaluation</div>
+            <div class="step-time" style="color:var(--primary)">Running…</div>
+          </div>
+          <div class="step-connector sc-idle"></div>
+          <div class="step-item" onclick="selectStep(4)">
+            <div class="step-circle waiting">👤<span class="step-badge sb-waiting">!</span></div>
+            <div class="step-name">Human Approval</div>
+            <div class="step-time">Awaiting</div>
+          </div>
+          <div class="step-connector sc-idle"></div>
+          <div class="step-item" onclick="selectStep(5)">
+            <div class="step-circle idle">🔄</div>
+            <div class="step-name">Execution</div>
+            <div class="step-time">—</div>
+          </div>
         </div>
-        <div class="flow-arrow">
-          <svg class="arrow-svg" viewBox="0 0 32 20"><defs><linearGradient id="ag1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#059669"/></linearGradient></defs><line x1="0" y1="10" x2="25" y2="10" stroke="url(#ag1)" stroke-width="1.5"/><polygon points="24,6 32,10 24,14" fill="#059669"/></svg>
-        </div>
-        <div class="agent-node done">
-          <div class="node-icon">📋</div>
-          <div class="node-name">Triage</div>
-          <div class="node-status-row ns-done">✓ Done</div>
-        </div>
-        <div class="flow-arrow">
-          <svg class="arrow-svg" viewBox="0 0 32 20"><line x1="0" y1="10" x2="25" y2="10" stroke="#059669" stroke-width="1.5"/><polygon points="24,6 32,10 24,14" fill="#059669"/></svg>
-        </div>
-        <div class="agent-node done">
-          <div class="node-icon">🚚</div>
-          <div class="node-name">Carrier Sourcing</div>
-          <div class="node-status-row ns-done">✓ Done</div>
-        </div>
-        <div class="flow-arrow">
-          <svg class="arrow-svg" viewBox="0 0 32 20"><line x1="0" y1="10" x2="25" y2="10" stroke="#059669" stroke-width="1.5"/><polygon points="24,6 32,10 24,14" fill="#059669"/></svg>
-        </div>
-        <div class="agent-node running">
-          <div class="node-icon">⚖️</div>
-          <div class="node-name">Evaluation</div>
-          <div class="node-status-row ns-running"><span class="spin">◌</span> Running</div>
-        </div>
-        <div class="flow-arrow">
-          <svg class="arrow-svg" viewBox="0 0 32 20"><line x1="0" y1="10" x2="25" y2="10" stroke="#E5E7EB" stroke-width="1.5"/><polygon points="24,6 32,10 24,14" fill="#9CA3AF"/></svg>
-        </div>
-        <div class="agent-node waiting">
-          <div class="node-icon">👤</div>
-          <div class="node-name">Human Approval</div>
-          <div class="node-status-row ns-waiting">⏸ Awaiting</div>
-        </div>
-        <div class="flow-arrow">
-          <svg class="arrow-svg" viewBox="0 0 32 20"><line x1="0" y1="10" x2="25" y2="10" stroke="#E5E7EB" stroke-width="1.5"/><polygon points="24,6 32,10 24,14" fill="#9CA3AF"/></svg>
-        </div>
-        <div class="agent-node idle">
-          <div class="node-icon">🔄</div>
-          <div class="node-name">Execution</div>
-          <div class="node-status-row ns-idle">— Idle</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Agent detail cards -->
-    <div class="section-label">Agent Configuration</div>
-    <div class="detail-grid">
-      <div class="detail-card done">
-        <div class="dc-header"><span class="dc-icon">🔍</span><span class="dc-badge dcb-auto">Autonomous</span></div>
-        <div class="dc-name">Detection Agent</div>
-        <div class="dc-desc">Polls carrier APIs and TMS every 5 min. Triggers on cancellations, delays &gt;2h, customs flags.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">Poll interval</span><span class="dcm-val">5 min</span></div>
-          <div class="dc-metric"><span class="dcm-key">Last trigger</span><span class="dcm-val">09:15 UTC</span></div>
-          <div class="dc-metric"><span class="dcm-key">Events today</span><span class="dcm-val">3</span></div>
-        </div>
-      </div>
-      <div class="detail-card done">
-        <div class="dc-header"><span class="dc-icon">📋</span><span class="dc-badge dcb-auto">Autonomous</span></div>
-        <div class="dc-name">Triage Agent</div>
-        <div class="dc-desc">Classifies exception type, calculates SLA penalty exposure, sets deadline from contract rules.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">Severity</span><span class="dcm-val">Critical</span></div>
-          <div class="dc-metric"><span class="dcm-key">Penalty calc</span><span class="dcm-val">€14,400</span></div>
-          <div class="dc-metric"><span class="dcm-key">Deadline</span><span class="dcm-val">11:00 UTC</span></div>
-        </div>
-      </div>
-      <div class="detail-card done">
-        <div class="dc-header"><span class="dc-icon">🚚</span><span class="dc-badge dcb-loop">Loop · 3 calls</span></div>
-        <div class="dc-name">Carrier Sourcing</div>
-        <div class="dc-desc">Queries carrier availability APIs. Filters by lane coverage, capacity, and contract status.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">Carriers checked</span><span class="dcm-val">8</span></div>
-          <div class="dc-metric"><span class="dcm-key">Available</span><span class="dcm-val">3</span></div>
-          <div class="dc-metric"><span class="dcm-key">Exec time</span><span class="dcm-val">2.1s</span></div>
-        </div>
-      </div>
-      <div class="detail-card running">
-        <div class="dc-header"><span class="dc-icon">⚖️</span><span class="dc-badge dcb-auto">Autonomous</span></div>
-        <div class="dc-name">Scenario Evaluation</div>
-        <div class="dc-desc">Scores each carrier on OTD history, spot premium, capacity fit, and SLA risk — ranks top 3.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">Scenarios</span><span class="dcm-val">3</span></div>
-          <div class="dc-metric"><span class="dcm-key">Top score</span><span class="dcm-val">94 / 100</span></div>
-          <div class="dc-metric"><span class="dcm-key">Status</span><span class="dcm-val running">Running…</span></div>
-        </div>
-      </div>
-      <div class="detail-card waiting">
-        <div class="dc-header"><span class="dc-icon">👤</span><span class="dc-badge dcb-human">Human-in-loop</span></div>
-        <div class="dc-name">Human Approval</div>
-        <div class="dc-desc">Planner reviews ranked scenarios in Workflow view. Can Accept, Override, or Request Info.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">Timeout</span><span class="dcm-val">60 min</span></div>
-          <div class="dc-metric"><span class="dcm-key">Escalation</span><span class="dcm-val">Ops Manager</span></div>
-          <div class="dc-metric"><span class="dcm-key">Avg decision</span><span class="dcm-val">4.2 min</span></div>
-        </div>
-      </div>
-      <div class="detail-card idle" style="opacity:0.6">
-        <div class="dc-header"><span class="dc-icon">🔄</span><span class="dc-badge dcb-auto">Autonomous</span></div>
-        <div class="dc-name">Execution Agent</div>
-        <div class="dc-desc">Writes reroute to TMS, sends carrier confirmation, notifies Tier 1 customers with revised ETA.</div>
-        <div class="dc-metrics">
-          <div class="dc-metric"><span class="dcm-key">TMS writeback</span><span class="dcm-val pending">Pending</span></div>
-          <div class="dc-metric"><span class="dcm-key">Avg exec time</span><span class="dcm-val">0.8s</span></div>
-          <div class="dc-metric"><span class="dcm-key">Success rate</span><span class="dcm-val">99.2%</span></div>
+        <!-- Step details -->
+        <div class="step-details" id="step-details">
+          <div class="step-detail-row" id="sdr-0" onclick="selectStep(0)">
+            <div class="sdr-icon">🔍</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Detection Agent</div>
+              <div class="sdr-desc">Polls carrier APIs and TMS every 5 min. Triggered by FastFreight GmbH cancellation signal on 3 lanes.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-done">✓ Complete</span>
+              <span class="sdr-timing">09:15:02 UTC</span>
+            </div>
+          </div>
+          <div class="step-detail-row" id="sdr-1" onclick="selectStep(1)">
+            <div class="sdr-icon">📋</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Triage Agent</div>
+              <div class="sdr-desc">Classified: Carrier Cancellation · Critical · SLA exposure €14,400 · Deadline 11:00 UTC.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-done">✓ Complete</span>
+              <span class="sdr-timing">09:15:08 UTC</span>
+            </div>
+          </div>
+          <div class="step-detail-row" id="sdr-2" onclick="selectStep(2)">
+            <div class="sdr-icon">🚚</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Carrier Sourcing Agent</div>
+              <div class="sdr-desc">Queried 8 carriers. 3 available with capacity on MUC-FRA, MUC-HAM, MUC-BER. AlphaLogistics confirmed all 14 units.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-done">✓ Complete</span>
+              <span class="sdr-timing">09:15:10 UTC</span>
+            </div>
+          </div>
+          <div class="step-detail-row active" id="sdr-3" onclick="selectStep(3)">
+            <div class="sdr-icon">⚖️</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Scenario Evaluation Agent</div>
+              <div class="sdr-desc">Scoring 3 scenarios against OTD history, spot premium, capacity fit, and SLA risk model. Top score: 94/100.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-running"><span class="spin">◌</span> Running</span>
+              <span class="sdr-timing">09:15:12 UTC</span>
+            </div>
+          </div>
+          <div class="step-detail-row" id="sdr-4" onclick="selectStep(4)">
+            <div class="sdr-icon">👤</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Human Approval Gate</div>
+              <div class="sdr-desc">Planner reviews ranked scenarios in Workflow view. Can Accept, Override, or Request Info. Timeout: 60 min.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-waiting">⏸ Waiting</span>
+              <span class="sdr-timing">—</span>
+            </div>
+          </div>
+          <div class="step-detail-row" id="sdr-5" onclick="selectStep(5)">
+            <div class="sdr-icon">🔄</div>
+            <div class="sdr-main">
+              <div class="sdr-name">Execution Agent</div>
+              <div class="sdr-desc">Writes reroute to TMS, sends carrier confirmation, notifies Tier 1 customers with revised ETA.</div>
+            </div>
+            <div class="sdr-status">
+              <span class="sdr-pill sp-idle">— Idle</span>
+              <span class="sdr-timing">—</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Config -->
+    <!-- Scenario Comparison -->
+    <div class="section-label">Scenario Comparison — Generated by Evaluation Agent</div>
+    <div class="scenario-card">
+      <div class="sc-header">
+        <div class="sc-title">3 Ranked Scenarios for EX-2026-1847</div>
+        <div class="sc-badge">⏸ Awaiting human approval</div>
+      </div>
+      <div class="scenario-grid">
+        <div class="sg-item recommended">
+          <span class="sg-rec-badge">★ Recommended</span>
+          <div class="sg-num">Scenario 1</div>
+          <div class="sg-carrier">AlphaLogistics GmbH</div>
+          <div class="sg-metrics">
+            <div class="sg-metric"><span class="sgm-key">OTD Rate</span><span class="sgm-val good">94%</span></div>
+            <div class="sg-metric"><span class="sgm-key">Capacity</span><span class="sgm-val good">All 14 units</span></div>
+            <div class="sg-metric"><span class="sgm-key">Spot Premium</span><span class="sgm-val neutral">+€87/unit</span></div>
+            <div class="sg-metric"><span class="sgm-key">Total Cost</span><span class="sgm-val neutral">+€1,218</span></div>
+            <div class="sg-metric"><span class="sgm-key">Net Saving</span><span class="sgm-val good">€13,182</span></div>
+          </div>
+          <div class="sg-score">
+            <span class="sg-score-label">Score</span>
+            <span class="sg-score-val top">94</span>
+          </div>
+          <div class="sg-score-bar"><div class="sg-score-fill fill-green" style="width:94%"></div></div>
+        </div>
+        <div class="sg-item">
+          <div class="sg-num">Scenario 2</div>
+          <div class="sg-carrier">FlexTrans Europe</div>
+          <div class="sg-metrics">
+            <div class="sg-metric"><span class="sgm-key">OTD Rate</span><span class="sgm-val neutral">79%</span></div>
+            <div class="sg-metric"><span class="sgm-key">Capacity</span><span class="sgm-val bad">8 of 14 units</span></div>
+            <div class="sg-metric"><span class="sgm-key">Spot Premium</span><span class="sgm-val bad">+€240/unit</span></div>
+            <div class="sg-metric"><span class="sgm-key">Total Cost</span><span class="sgm-val bad">+€3,360</span></div>
+            <div class="sg-metric"><span class="sgm-key">Net Saving</span><span class="sgm-val neutral">€11,040</span></div>
+          </div>
+          <div class="sg-score">
+            <span class="sg-score-label">Score</span>
+            <span class="sg-score-val mid">52</span>
+          </div>
+          <div class="sg-score-bar"><div class="sg-score-fill fill-blue" style="width:52%"></div></div>
+        </div>
+        <div class="sg-item">
+          <div class="sg-num">Scenario 3</div>
+          <div class="sg-carrier">Split: Speed + NordTrans</div>
+          <div class="sg-metrics">
+            <div class="sg-metric"><span class="sgm-key">OTD Rate</span><span class="sgm-val neutral">avg 89%</span></div>
+            <div class="sg-metric"><span class="sgm-key">Capacity</span><span class="sgm-val neutral">7 + 7 units</span></div>
+            <div class="sg-metric"><span class="sgm-key">Spot Premium</span><span class="sgm-val neutral">+€95/unit avg</span></div>
+            <div class="sg-metric"><span class="sgm-key">Total Cost</span><span class="sgm-val neutral">+€1,330</span></div>
+            <div class="sg-metric"><span class="sgm-key">Net Saving</span><span class="sgm-val neutral">€13,070</span></div>
+          </div>
+          <div class="sg-score">
+            <span class="sg-score-label">Score</span>
+            <span class="sg-score-val mid">71</span>
+          </div>
+          <div class="sg-score-bar"><div class="sg-score-fill fill-gray" style="width:71%"></div></div>
+        </div>
+      </div>
+      <div class="sc-footer">
+        ✦ AI selects Scenario 1 — highest OTD, full capacity, lowest complexity.
+        Accepting saves <strong>€13,182</strong> net vs €14,400 penalty.
+      </div>
+    </div>
+
+    <!-- Engine Config -->
     <div class="section-label">Engine Configuration</div>
     <div class="config-grid">
       <div class="config-card">
@@ -320,7 +393,7 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
       <div class="log-list">
         <div class="log-item done">
           <div class="log-time">09:15:02 UTC</div>
-          <div class="log-text"><span class="hl">Detection triggered</span> — FastFreight GmbH sent cancellation signal on MUC-FRA, MUC-HAM, MUC-BER</div>
+          <div class="log-text"><span class="hl">Detection triggered</span> — FastFreight GmbH cancellation on MUC-FRA, MUC-HAM, MUC-BER</div>
         </div>
         <div class="log-item done">
           <div class="log-time">09:15:08 UTC</div>
@@ -328,11 +401,11 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
         </div>
         <div class="log-item done">
           <div class="log-time">09:15:10 UTC</div>
-          <div class="log-text"><span class="hl">Sourcing complete</span> — 8 carriers checked, 3 available with capacity on target lanes</div>
+          <div class="log-text"><span class="hl">Sourcing complete</span> — 8 carriers checked, 3 with capacity on target lanes</div>
         </div>
         <div class="log-item running">
-          <div class="log-time">09:15:12 UTC</div>
-          <div class="log-text"><span class="hl">Evaluation running</span> — scoring 3 scenarios against OTD, cost, capacity, SLA risk…</div>
+          <div class="log-time"><span class="spin" style="font-size:9px;color:var(--primary)">◌</span> 09:15:12 UTC</div>
+          <div class="log-text"><span class="hl">Evaluation running</span> — scoring 3 scenarios against OTD, cost, capacity…</div>
         </div>
         <div class="log-item waiting">
           <div class="log-time">Pending</div>
@@ -343,20 +416,30 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
     <div class="rp-section">
       <div class="rp-heading">Run Metrics</div>
       <div style="display:flex;flex-direction:column;gap:6px;">
-        <div class="metric-pill"><span class="mp-label">Elapsed</span><span class="mp-val" id="elapsed">10s</span></div>
+        <div class="metric-pill"><span class="mp-label">Elapsed</span><span class="mp-val" id="elapsed-metric">12s</span></div>
         <div class="metric-pill"><span class="mp-label">Agents complete</span><span class="mp-val">3 / 6</span></div>
         <div class="metric-pill"><span class="mp-label">Top scenario score</span><span class="mp-val">94 / 100</span></div>
         <div class="metric-pill"><span class="mp-label">Carriers evaluated</span><span class="mp-val">3</span></div>
+        <div class="metric-pill"><span class="mp-label">API calls made</span><span class="mp-val">11</span></div>
       </div>
     </div>
     <div class="rp-section">
       <div class="rp-heading">This Exception</div>
       <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;">
-        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">ID</span><span style="font-weight:600;font-family:monospace">EX-2024-1847</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">ID</span><span style="font-weight:600;font-family:monospace">EX-2026-1847</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Type</span><span style="font-weight:600">Carrier Cancellation</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Carrier</span><span style="font-weight:600">FastFreight GmbH</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Shipments</span><span style="font-weight:600">14</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Exposure</span><span style="font-weight:600;color:var(--critical)">€14,400</span></div>
+      </div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-heading">Today's Activity</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Exceptions detected</span><span style="font-weight:600">5</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Auto-resolved</span><span style="font-weight:600;color:var(--success)">0</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Awaiting planner</span><span style="font-weight:600;color:var(--warning)">5</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-3)">Avg detection time</span><span style="font-weight:600">0.4s</span></div>
       </div>
     </div>
   </div>
@@ -364,178 +447,25 @@ body { display: flex; flex-direction: column; background: var(--bg); color: var(
 </div><!-- /page -->
 
 <script>
-// ── Config edits ──
+let elapsed = 12;
+setInterval(() => {
+  elapsed++;
+  const t = elapsed + 's';
+  document.getElementById('elapsed').textContent = t;
+  document.getElementById('elapsed-metric').textContent = t;
+}, 1000);
+
+function selectStep(idx) {
+  document.querySelectorAll('.step-detail-row').forEach((row, i) => {
+    row.classList.toggle('active', i === idx);
+  });
+}
+
 function editVal(el) {
   const cur = el.textContent.replace(' ✎', '').trim();
   const v = prompt('Update value:', cur);
   if (v !== null && v.trim()) el.textContent = v.trim() + ' ✎';
 }
-
-// ── Elapsed timer ──
-let elapsed = 10;
-setInterval(() => {
-  elapsed++;
-  document.getElementById('elapsed').textContent = elapsed + 's';
-}, 1000);
-
-// ── D3 Force Graph ──
-const COLORS = {
-  shipment:  '#1669F5',
-  carrier:   '#7C3AED',
-  lane:      '#059669',
-  customer:  '#D97706',
-  exception: '#DC2626',
-};
-
-const NODES_FULL = [
-  // Shipments (30)
-  ...Array.from({length: 30}, (_, i) => ({ id: 's'+i, type: 'shipment', label: i===0?'SHP-001':null, r: i<14?5:3.5 })),
-  // Carriers (8)
-  ...Array.from({length: 8},  (_, i) => ({ id: 'c'+i, type: 'carrier',  label: ['AlphaLog','FastFreight','SpeedCargo','FlexTrans',null,null,null,null][i], r: 7 })),
-  // Lanes (6)
-  ...Array.from({length: 6},  (_, i) => ({ id: 'l'+i, type: 'lane',    label: ['MUC-FRA','MUC-HAM','MUC-BER',null,null,null][i], r: 6 })),
-  // Customers (10)
-  ...Array.from({length: 10}, (_, i) => ({ id: 'k'+i, type: 'customer', label: i===0?'Tier 1':null, r: 5 })),
-  // Exceptions (5)
-  ...Array.from({length: 5},  (_, i) => ({ id: 'e'+i, type: 'exception',label: i===0?'EX-1847':null, r: i===0?8:5 })),
-];
-
-const LINKS_FULL = [
-  // Shipments → lanes
-  ...Array.from({length: 14}, (_, i) => ({ source: 's'+i, target: 'l'+(i%3) })),
-  ...Array.from({length: 16}, (_, i) => ({ source: 's'+(i+14), target: 'l'+((i+1)%6) })),
-  // Shipments → carriers
-  ...Array.from({length: 14}, (_, i) => ({ source: 's'+i, target: 'c1' })),
-  ...Array.from({length: 8},  (_, i) => ({ source: 's'+(i+14), target: 'c'+(i%8) })),
-  // Exceptions → shipments
-  { source: 'e0', target: 's0' }, { source: 'e0', target: 's3' }, { source: 'e0', target: 's7' },
-  ...Array.from({length: 4}, (_, i) => ({ source: 'e'+(i+1), target: 's'+(i+16) })),
-  // Customers → shipments
-  ...Array.from({length: 10}, (_, i) => ({ source: 'k'+i, target: 's'+((i*3)%30) })),
-  // Lanes → carriers
-  ...Array.from({length: 6},  (_, i) => ({ source: 'l'+i, target: 'c'+(i%8) })),
-];
-
-// Exception view: just the affected cluster
-const NODES_EXC = [
-  { id: 'e0', type: 'exception', label: 'EX-1847', r: 10 },
-  ...Array.from({length: 14}, (_, i) => ({ id: 's'+i, type: 'shipment', label: i===0?'SHP-001':null, r: 5 })),
-  { id: 'c0', type: 'carrier', label: 'AlphaLog', r: 8 },
-  { id: 'c1', type: 'carrier', label: 'FastFreight', r: 8 },
-  { id: 'c2', type: 'carrier', label: 'SpeedCargo', r: 7 },
-  { id: 'l0', type: 'lane', label: 'MUC-FRA', r: 7 },
-  { id: 'l1', type: 'lane', label: 'MUC-HAM', r: 7 },
-  { id: 'l2', type: 'lane', label: 'MUC-BER', r: 7 },
-  { id: 'k0', type: 'customer', label: 'Tier 1 Client', r: 7 },
-];
-const LINKS_EXC = [
-  ...Array.from({length: 14}, (_, i) => ({ source: 'e0', target: 's'+i })),
-  ...Array.from({length: 14}, (_, i) => ({ source: 's'+i, target: 'l'+(i%3) })),
-  ...Array.from({length: 14}, (_, i) => ({ source: 's'+i, target: 'c1' })),
-  { source: 'l0', target: 'c0' }, { source: 'l1', target: 'c0' }, { source: 'l2', target: 'c0' },
-  { source: 'k0', target: 's0' }, { source: 'k0', target: 's4' },
-];
-
-let currentView = 'full';
-let simulation = null;
-
-function buildGraph(nodes, links) {
-  const svg = d3.select('#graph-svg');
-  svg.selectAll('*').remove();
-  const rect = svg.node().getBoundingClientRect();
-  const W = rect.width || 700, H = 240;
-  svg.attr('height', H);
-
-  const defs = svg.append('defs');
-  // Subtle radial bg
-  const rg = defs.append('radialGradient').attr('id','rg').attr('cx','50%').attr('cy','50%').attr('r','50%');
-  rg.append('stop').attr('offset','0%').attr('stop-color','#EFF6FF').attr('stop-opacity',0.6);
-  rg.append('stop').attr('offset','100%').attr('stop-color','#F5F7FA').attr('stop-opacity',0);
-  svg.append('rect').attr('width', W).attr('height', H).attr('fill','url(#rg)');
-
-  const nodesData = nodes.map(d => ({...d}));
-  const linksData = links.map(d => ({...d}));
-
-  simulation = d3.forceSimulation(nodesData)
-    .force('link', d3.forceLink(linksData).id(d => d.id).distance(30).strength(0.5))
-    .force('charge', d3.forceManyBody().strength(-60))
-    .force('center', d3.forceCenter(W/2, H/2))
-    .force('collision', d3.forceCollide(d => d.r + 3))
-    .alphaDecay(0.02);
-
-  const link = svg.append('g').selectAll('line').data(linksData).enter().append('line')
-    .attr('stroke', d => {
-      const src = nodesData.find(n => n.id === (d.source.id || d.source));
-      return src ? COLORS[src.type] + '30' : '#E5E7EB';
-    })
-    .attr('stroke-width', 1);
-
-  const node = svg.append('g').selectAll('g').data(nodesData).enter().append('g')
-    .call(d3.drag()
-      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
-
-  // Exception node glows
-  node.filter(d => d.type === 'exception').append('circle')
-    .attr('r', d => d.r + 5)
-    .attr('fill', 'none')
-    .attr('stroke', COLORS.exception)
-    .attr('stroke-width', 1.5)
-    .attr('stroke-opacity', 0.25)
-    .attr('stroke-dasharray', '4 2');
-
-  node.append('circle')
-    .attr('r', d => d.r)
-    .attr('fill', d => COLORS[d.type] + (d.type === 'exception' ? 'E0' : '20'))
-    .attr('stroke', d => COLORS[d.type])
-    .attr('stroke-width', d => d.type === 'exception' ? 2 : 1.5)
-    .attr('cursor', 'pointer');
-
-  node.filter(d => d.label).append('text')
-    .text(d => d.label)
-    .attr('text-anchor', 'middle')
-    .attr('dy', d => d.r + 10)
-    .attr('font-size', '9px')
-    .attr('font-family', 'Inter, sans-serif')
-    .attr('font-weight', '600')
-    .attr('fill', d => COLORS[d.type]);
-
-  // Pulsing animation on active exception node
-  if (currentView === 'exception') {
-    const excNode = node.filter(d => d.id === 'e0').select('circle');
-    function pulse() {
-      excNode.transition().duration(800).attr('r', 12).attr('stroke-opacity', 0.5)
-        .transition().duration(800).attr('r', 10).attr('stroke-opacity', 1).on('end', pulse);
-    }
-    pulse();
-  }
-
-  simulation.on('tick', () => {
-    link
-      .attr('x1', d => Math.max(10, Math.min(W-10, d.source.x)))
-      .attr('y1', d => Math.max(10, Math.min(H-10, d.source.y)))
-      .attr('x2', d => Math.max(10, Math.min(W-10, d.target.x)))
-      .attr('y2', d => Math.max(10, Math.min(H-10, d.target.y)));
-    node.attr('transform', d => `translate(${Math.max(d.r+2, Math.min(W-d.r-2, d.x))},${Math.max(d.r+2, Math.min(H-d.r-2, d.y))})`);
-  });
-
-  // Zoom/pan
-  svg.call(d3.zoom().scaleExtent([0.5, 3]).on('zoom', e => {
-    svg.selectAll('g').attr('transform', e.transform);
-  }));
-}
-
-function setView(v) {
-  currentView = v;
-  document.getElementById('btn-full').classList.toggle('active', v === 'full');
-  document.getElementById('btn-exception').classList.toggle('active', v === 'exception');
-  if (simulation) simulation.stop();
-  buildGraph(v === 'full' ? NODES_FULL : NODES_EXC, v === 'full' ? LINKS_FULL : LINKS_EXC);
-}
-
-window.addEventListener('load', () => { buildGraph(NODES_FULL, LINKS_FULL); });
-window.addEventListener('resize', () => setView(currentView));
 </script>
 </body>
 </html>
