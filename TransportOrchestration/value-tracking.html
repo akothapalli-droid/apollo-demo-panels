@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Value Tracking</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1A1F2E;
+  --bg-card: #242938;
+  --border: #3A3F52;
+  --text: #E8EAF0;
+  --text-2: #9AA3B8;
+  --text-3: #5C6478;
+  --blue: #4C9FEB;
+  --green: #2ECC71;
+  --amber: #F0A500;
+  --red: #E05050;
+  --orange: #E67E22;
+  --purple: #9B59B6;
+  --radius: 6px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, sans-serif;
+  font-size: 13px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.page-title { font-size: 16px; font-weight: 700; }
+.page-subtitle { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+
+/* ── Hero KPIs ── */
+.hero-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.hero-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.hero-kpi.green::before { background: var(--green); }
+.hero-kpi.blue::before { background: var(--blue); }
+.hero-kpi.amber::before { background: var(--amber); }
+.hero-kpi.purple::before { background: var(--purple); }
+
+.kpi-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 26px; font-weight: 800; margin: 6px 0 4px; }
+.kpi-value.green { color: var(--green); }
+.kpi-value.blue { color: var(--blue); }
+.kpi-value.amber { color: var(--amber); }
+.kpi-value.purple { color: var(--purple); }
+.kpi-delta { font-size: 11px; color: var(--text-3); }
+.kpi-delta .up { color: var(--green); }
+
+/* ── Charts row ── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.chart-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-month { font-size: 11px; color: var(--text-3); width: 28px; flex-shrink: 0; }
+.bar-track {
+  flex: 1;
+  height: 20px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  transition: width 1s ease;
+  min-width: 30px;
+}
+.bar-fill.avoided { background: linear-gradient(90deg, #1d6e3e, var(--green)); }
+.bar-fill.cost { background: linear-gradient(90deg, #7b3f15, var(--orange)); }
+.bar-legend { display: flex; gap: 12px; font-size: 11px; color: var(--text-3); }
+.bar-legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Donut */
+.donut-section { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.donut-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+.donut-center { position: absolute; text-align: center; }
+.donut-big { font-size: 22px; font-weight: 800; color: var(--green); }
+.donut-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.donut-legend { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.donut-legend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.donut-legend-left { display: flex; align-items: center; gap: 7px; }
+.d-dot { width: 10px; height: 10px; border-radius: 50%; }
+.d-dot.accepted { background: var(--green); }
+.d-dot.overwritten { background: var(--orange); }
+.d-dot.escalated { background: var(--amber); }
+.d-count { font-weight: 600; color: var(--text-2); }
+.d-pct { font-size: 10px; color: var(--text-3); }
+
+/* ── Bottom row ── */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Timeline */
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 4px;
+  border-left: 3px solid transparent;
+}
+.timeline-item.accepted { border-left-color: var(--green); }
+.timeline-item.overwritten { border-left-color: var(--orange); }
+.tl-date { font-size: 10px; color: var(--text-3); width: 60px; flex-shrink: 0; }
+.tl-body { flex: 1; }
+.tl-title { font-size: 12px; font-weight: 600; }
+.tl-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.tl-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.tl-badge.accepted { background: rgba(46,204,113,0.15); color: var(--green); }
+.tl-badge.overwritten { background: rgba(230,126,34,0.15); color: var(--orange); }
+
+/* Override reasons */
+.override-list { display: flex; flex-direction: column; gap: 8px; }
+.override-item {
+  background: rgba(0,0,0,0.15);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--orange);
+}
+.override-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+.override-reason { font-size: 12px; color: var(--text-2); font-style: italic; }
+.override-outcome { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+.override-outcome span { color: var(--amber); }
+
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-3); }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="page-title">Value Tracking</div>
+  <div class="page-subtitle">AI-assisted exception resolution — outcomes and financial impact</div>
+</div>
+
+<!-- Hero KPIs -->
+<div class="hero-kpis">
+  <div class="hero-kpi green">
+    <div class="kpi-label">Penalties Avoided (YTD)</div>
+    <div class="kpi-value green">€168,400</div>
+    <div class="kpi-delta"><span class="up">+€14,400</span> from latest resolution</div>
+  </div>
+  <div class="hero-kpi blue">
+    <div class="kpi-label">Exceptions Resolved</div>
+    <div class="kpi-value blue">47</div>
+    <div class="kpi-delta">Avg resolution time <span>4.2 min</span></div>
+  </div>
+  <div class="hero-kpi amber">
+    <div class="kpi-label">AI Acceptance Rate</div>
+    <div class="kpi-value amber">81%</div>
+    <div class="kpi-delta">38 accepted · 7 overwritten · 2 escalated</div>
+  </div>
+  <div class="hero-kpi purple">
+    <div class="kpi-label">Avg Saving per Resolution</div>
+    <div class="kpi-value purple">€3,583</div>
+    <div class="kpi-delta">vs €0 without orchestration engine</div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="charts-row">
+
+  <!-- Stacked bar: savings over time -->
+  <div class="chart-card">
+    <div class="chart-title">Penalty Avoided vs Additional Cost (by Month)</div>
+    <div class="bar-chart">
+      <div class="bar-row">
+        <span class="bar-month">Oct</span>
+        <div class="bar-track">
+          <div class="bar-fill avoided" style="width:52%">€41.2k</div>
+          <div class="bar-fill cost" style="width:6%"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-month">Nov</span>
+        <div class="bar-track">
+          <div class="bar-fill avoided" style="width:44%">€34.8k</div>
+          <div class="bar-fill cost" style="width:4%"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-month">Dec</span>
+        <div class="bar-track">
+          <div class="bar-fill avoided" style="width:61%">€48.6k</div>
+          <div class="bar-fill cost" style="width:7%"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-month">Jan</span>
+        <div class="bar-track">
+          <div class="bar-fill avoided" style="width:55%">€43.8k</div>
+          <div class="bar-fill cost" style="width:5%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-legend" style="margin-top:10px;">
+      <div class="bar-legend-item"><span class="legend-dot" style="background:var(--green)"></span>Penalty avoided</div>
+      <div class="bar-legend-item"><span class="legend-dot" style="background:var(--orange)"></span>Additional cost (rerouting premium)</div>
+    </div>
+  </div>
+
+  <!-- Donut: decision outcomes -->
+  <div class="chart-card">
+    <div class="chart-title">Decision Outcomes</div>
+    <div class="donut-section">
+      <div class="donut-wrap">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="52" fill="none" stroke="#2C3347" stroke-width="14"/>
+          <!-- 81% accepted = 264 of 326.7 -->
+          <circle cx="65" cy="65" r="52" fill="none" stroke="#2ECC71" stroke-width="14"
+            stroke-dasharray="264 326.7" stroke-dashoffset="81.7"
+            transform="rotate(-90 65 65)"/>
+          <!-- 15% overwritten = 49 of 326.7 -->
+          <circle cx="65" cy="65" r="52" fill="none" stroke="#E67E22" stroke-width="14"
+            stroke-dasharray="49 326.7" stroke-dashoffset="-182.3"
+            transform="rotate(-90 65 65)"/>
+          <!-- 4% escalated = 13 of 326.7 -->
+          <circle cx="65" cy="65" r="52" fill="none" stroke="#F0A500" stroke-width="14"
+            stroke-dasharray="13 326.7" stroke-dashoffset="-231.3"
+            transform="rotate(-90 65 65)"/>
+        </svg>
+        <div class="donut-center">
+          <div class="donut-big">81%</div>
+          <div class="donut-sub">Accepted</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="donut-legend-row">
+          <div class="donut-legend-left"><span class="d-dot accepted"></span>Accepted</div>
+          <div><span class="d-count">38</span> <span class="d-pct">(81%)</span></div>
+        </div>
+        <div class="donut-legend-row">
+          <div class="donut-legend-left"><span class="d-dot overwritten"></span>Overwritten</div>
+          <div><span class="d-count">7</span> <span class="d-pct">(15%)</span></div>
+        </div>
+        <div class="donut-legend-row">
+          <div class="donut-legend-left"><span class="d-dot escalated"></span>Escalated</div>
+          <div><span class="d-count">2</span> <span class="d-pct">(4%)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom row -->
+<div class="bottom-row">
+
+  <!-- Resolution timeline -->
+  <div class="chart-card">
+    <div class="chart-title">Recent Resolutions</div>
+    <div class="timeline">
+      <div class="timeline-item accepted">
+        <span class="tl-date">Jan 15 09:31</span>
+        <div class="tl-body">
+          <div class="tl-title">EX-2024-1847 — Carrier Cancellation</div>
+          <div class="tl-detail">14 shipments rerouted to AlphaLogistics · €14,400 avoided · +€1,218 cost</div>
+        </div>
+        <span class="tl-badge accepted">Accepted</span>
+      </div>
+      <div class="timeline-item accepted">
+        <span class="tl-date">Jan 14 16:44</span>
+        <div class="tl-body">
+          <div class="tl-title">EX-2024-1838 — SLA Breach Risk</div>
+          <div class="tl-detail">Priority re-routing on MUC-BER · €4,800 avoided · +€340 cost</div>
+        </div>
+        <span class="tl-badge accepted">Accepted</span>
+      </div>
+      <div class="timeline-item overwritten">
+        <span class="tl-date">Jan 13 11:20</span>
+        <div class="tl-body">
+          <div class="tl-title">EX-2024-1821 — Carrier Delay</div>
+          <div class="tl-detail">AI: SpeedCargo AG · Override: DirectFreight AG selected by planner</div>
+        </div>
+        <span class="tl-badge overwritten">Overwritten</span>
+      </div>
+      <div class="timeline-item accepted">
+        <span class="tl-date">Jan 12 08:15</span>
+        <div class="tl-body">
+          <div class="tl-title">EX-2024-1810 — Carrier Cancellation</div>
+          <div class="tl-detail">6 shipments rerouted · €6,400 avoided · +€480 cost</div>
+        </div>
+        <span class="tl-badge accepted">Accepted</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Override analysis -->
+  <div class="chart-card">
+    <div class="chart-title">Override Analysis — Why Planners Overrode AI</div>
+    <div class="override-list">
+      <div class="override-item">
+        <div class="override-header">
+          <span>EX-2024-1821 · Jan 13</span>
+          <span>Carrier Delay</span>
+        </div>
+        <div class="override-reason">"DirectFreight has a dedicated lane agreement this week — better long-term relationship."</div>
+        <div class="override-outcome">Outcome: On-time delivery. <span>Planner insight captured for future scoring.</span></div>
+      </div>
+      <div class="override-item">
+        <div class="override-header">
+          <span>EX-2024-1798 · Jan 8</span>
+          <span>Customs Hold</span>
+        </div>
+        <div class="override-reason">"Customer CUST-A specifically requested we do not use broker Müller — prior dispute."</div>
+        <div class="override-outcome">Outcome: Resolved in 6.5h. <span>Customer preference flag added to profile.</span></div>
+      </div>
+      <div class="override-item">
+        <div class="override-header">
+          <span>EX-2024-1774 · Dec 28</span>
+          <span>Carrier Cancellation</span>
+        </div>
+        <div class="override-reason">"AI scored FlexTrans low but they had verbal confirmation of spare capacity — not in API."</div>
+        <div class="override-outcome">Outcome: On-time delivery. <span>Capacity API integration improvement identified.</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Orchestration Engine</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1A1F2E;
+  --bg-card: #242938;
+  --border: #3A3F52;
+  --text: #E8EAF0;
+  --text-2: #9AA3B8;
+  --text-3: #5C6478;
+  --blue: #4C9FEB;
+  --green: #2ECC71;
+  --amber: #F0A500;
+  --red: #E05050;
+  --purple: #9B59B6;
+  --orange: #E67E22;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.page-title { font-size: 16px; font-weight: 700; }
+.page-subtitle { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.status-dot { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 5px rgba(46,204,113,0); }
+}
+.engine-live { font-size: 12px; color: var(--green); display: flex; align-items: center; }
+
+/* ── Flow canvas ── */
+.flow-canvas {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  justify-content: center;
+}
+.flow-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.flow-connector {
+  display: flex;
+  align-items: center;
+  padding-top: 22px;
+}
+.arrow-line {
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--border), var(--blue));
+  position: relative;
+}
+.arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid var(--blue);
+}
+.arrow-line.active {
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  animation: flow-anim 1.5s linear infinite;
+}
+.arrow-line.active::after { border-left-color: var(--green); }
+@keyframes flow-anim {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* ── Agent Node ── */
+.agent-node {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 140px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  position: relative;
+}
+.agent-node:hover {
+  border-color: var(--blue);
+  box-shadow: 0 0 12px rgba(76,159,235,0.25);
+  transform: translateY(-1px);
+}
+.agent-node.active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(76,159,235,0.3);
+}
+.agent-node.complete {
+  border-color: var(--green);
+}
+.agent-node.human {
+  border-color: var(--amber);
+  border-style: dashed;
+}
+.agent-node.human:hover {
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(240,165,0,0.25);
+}
+
+.node-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+  display: block;
+}
+.node-title {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.node-desc {
+  font-size: 10px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+.node-status {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.node-status.running { color: var(--blue); }
+.node-status.done { color: var(--green); }
+.node-status.waiting { color: var(--amber); }
+.node-status.idle { color: var(--text-3); }
+.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  font-style: normal;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Detail panel ── */
+.detail-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+.detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.detail-card:hover { border-color: var(--blue); }
+.detail-card.active { border-color: var(--blue); }
+.detail-card.complete { border-color: var(--green); }
+.detail-card.human { border-color: var(--amber); border-style: dashed; }
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-icon { font-size: 16px; }
+.detail-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.detail-badge.auto { background: rgba(76,159,235,0.15); color: var(--blue); }
+.detail-badge.loop { background: rgba(155,89,182,0.15); color: var(--purple); }
+.detail-badge.human-in { background: rgba(240,165,0,0.12); color: var(--amber); }
+.detail-title { font-size: 12px; font-weight: 700; }
+.detail-desc { font-size: 11px; color: var(--text-3); line-height: 1.4; }
+.detail-metrics { display: flex; flex-direction: column; gap: 3px; }
+.metric-row { display: flex; justify-content: space-between; font-size: 11px; }
+.metric-label { color: var(--text-3); }
+.metric-value { color: var(--text); font-weight: 500; }
+
+/* ── Config section ── */
+.config-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.config-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.config-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.config-rows { display: flex; flex-direction: column; gap: 6px; }
+.config-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.config-key { color: var(--text-3); }
+.config-val { color: var(--text); font-weight: 500; }
+.config-val.active { color: var(--green); }
+.config-val.edit {
+  background: rgba(76,159,235,0.1);
+  border: 1px solid rgba(76,159,235,0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  color: var(--blue);
+  cursor: pointer;
+}
+.config-val.edit:hover { background: rgba(76,159,235,0.2); }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-3);
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Orchestration Engine</div>
+    <div class="page-subtitle">Multi-agent exception resolution pipeline · Transport Exception Management</div>
+  </div>
+  <div class="engine-live">
+    <span class="status-dot"></span>
+    Live · Processing EX-2024-1847
+  </div>
+</div>
+
+<!-- ── Flow diagram ── -->
+<div class="flow-canvas">
+
+  <div class="flow-column">
+    <div class="agent-node complete" onclick="selectAgent(0)">
+      <span class="node-icon">🔍</span>
+      <div class="node-title">Detection Agent</div>
+      <div class="node-desc">Monitors carrier feeds for cancellations, delays & SLA risks</div>
+      <div class="node-status done">✓ Completed</div>
+    </div>
+  </div>
+
+  <div class="flow-connector"><div class="arrow-line active"></div></div>
+
+  <div class="flow-column">
+    <div class="agent-node complete" onclick="selectAgent(1)">
+      <span class="node-icon">📋</span>
+      <div class="node-title">Triage Agent</div>
+      <div class="node-desc">Classifies severity, calculates penalty exposure & deadline</div>
+      <div class="node-status done">✓ Completed</div>
+    </div>
+  </div>
+
+  <div class="flow-connector"><div class="arrow-line active"></div></div>
+
+  <div class="flow-column">
+    <div class="agent-node complete" onclick="selectAgent(2)">
+      <span class="node-icon">🚚</span>
+      <div class="node-title">Carrier Sourcing Agent</div>
+      <div class="node-desc">Scans available carriers, checks capacity & OTD performance</div>
+      <div class="node-status done">✓ Completed</div>
+    </div>
+  </div>
+
+  <div class="flow-connector"><div class="arrow-line active"></div></div>
+
+  <div class="flow-column">
+    <div class="agent-node active" onclick="selectAgent(3)">
+      <span class="node-icon">⚖️</span>
+      <div class="node-title">Scenario Evaluation Agent</div>
+      <div class="node-desc">Scores alternatives: cost, OTD, capacity, risk — ranks top 3</div>
+      <div class="node-status running"><i class="spin">◌</i> Running</div>
+    </div>
+  </div>
+
+  <div class="flow-connector"><div class="arrow-line"></div></div>
+
+  <div class="flow-column">
+    <div class="agent-node human" onclick="selectAgent(4)">
+      <span class="node-icon">👤</span>
+      <div class="node-title">Human Approval</div>
+      <div class="node-desc">Planner reviews ranked scenarios, accepts or overrides decision</div>
+      <div class="node-status waiting">⏳ Awaiting input</div>
+    </div>
+  </div>
+
+  <div class="flow-connector"><div class="arrow-line"></div></div>
+
+  <div class="flow-column">
+    <div class="agent-node" onclick="selectAgent(5)">
+      <span class="node-icon">🔄</span>
+      <div class="node-title">Execution Agent</div>
+      <div class="node-desc">Writes back to TMS, notifies carriers & customers, closes exception</div>
+      <div class="node-status idle">— Idle</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Agent detail cards ── -->
+<div class="section-title">Agent Configuration</div>
+<div class="detail-row">
+
+  <div class="detail-card complete" id="detail-0">
+    <div class="detail-header">
+      <span class="detail-icon">🔍</span>
+      <span class="detail-badge auto">Autonomous</span>
+    </div>
+    <div class="detail-title">Detection Agent</div>
+    <div class="detail-desc">Polls carrier APIs and TMS every 5 minutes. Triggers on cancellations, >2h delays, customs flags.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">Poll interval</span><span class="metric-value">5 min</span></div>
+      <div class="metric-row"><span class="metric-label">Last trigger</span><span class="metric-value">09:15 UTC</span></div>
+      <div class="metric-row"><span class="metric-label">Events today</span><span class="metric-value">3</span></div>
+    </div>
+  </div>
+
+  <div class="detail-card complete" id="detail-1">
+    <div class="detail-header">
+      <span class="detail-icon">📋</span>
+      <span class="detail-badge auto">Autonomous</span>
+    </div>
+    <div class="detail-title">Triage Agent</div>
+    <div class="detail-desc">Classifies exception type, calculates SLA penalty exposure, sets resolution deadline based on contract rules.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">Severity</span><span class="metric-value">Critical</span></div>
+      <div class="metric-row"><span class="metric-label">Penalty calc</span><span class="metric-value">€14,400</span></div>
+      <div class="metric-row"><span class="metric-label">Deadline</span><span class="metric-value">11:00 UTC</span></div>
+    </div>
+  </div>
+
+  <div class="detail-card complete" id="detail-2">
+    <div class="detail-header">
+      <span class="detail-icon">🚚</span>
+      <span class="detail-badge loop">Loop · 3 calls</span>
+    </div>
+    <div class="detail-title">Carrier Sourcing Agent</div>
+    <div class="detail-desc">Queries carrier availability APIs. Filters by lane coverage, capacity, and active contract status.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">Carriers checked</span><span class="metric-value">8</span></div>
+      <div class="metric-row"><span class="metric-label">Available</span><span class="metric-value">3</span></div>
+      <div class="metric-row"><span class="metric-label">Exec time</span><span class="metric-value">2.1s</span></div>
+    </div>
+  </div>
+
+  <div class="detail-card active" id="detail-3">
+    <div class="detail-header">
+      <span class="detail-icon">⚖️</span>
+      <span class="detail-badge auto">Autonomous</span>
+    </div>
+    <div class="detail-title">Scenario Evaluation</div>
+    <div class="detail-desc">Scores each carrier against OTD history, spot premium, full capacity fit, and SLA risk — ranks scenarios 1–3.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">Scenarios</span><span class="metric-value">3</span></div>
+      <div class="metric-row"><span class="metric-label">Top score</span><span class="metric-value">94 / 100</span></div>
+      <div class="metric-row"><span class="metric-label">Status</span><span class="metric-value" style="color:var(--blue)">Running…</span></div>
+    </div>
+  </div>
+
+  <div class="detail-card human" id="detail-4">
+    <div class="detail-header">
+      <span class="detail-icon">👤</span>
+      <span class="detail-badge human-in">Human-in-loop</span>
+    </div>
+    <div class="detail-title">Human Approval</div>
+    <div class="detail-desc">Planner receives ranked scenarios in workflow view. Can Accept, Request Info, or Override with a free-text rationale.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">Timeout</span><span class="metric-value">60 min</span></div>
+      <div class="metric-row"><span class="metric-label">Escalation</span><span class="metric-value">Ops Manager</span></div>
+      <div class="metric-row"><span class="metric-label">Avg decision</span><span class="metric-value">4.2 min</span></div>
+    </div>
+  </div>
+
+  <div class="detail-card" id="detail-5">
+    <div class="detail-header">
+      <span class="detail-icon">🔄</span>
+      <span class="detail-badge auto">Autonomous</span>
+    </div>
+    <div class="detail-title">Execution Agent</div>
+    <div class="detail-desc">Writes reroute instruction to TMS, sends carrier confirmation, notifies Tier 1 customers with revised ETA.</div>
+    <div class="detail-metrics">
+      <div class="metric-row"><span class="metric-label">TMS writeback</span><span class="metric-value" style="color:var(--text-3)">Pending</span></div>
+      <div class="metric-row"><span class="metric-label">Avg exec</span><span class="metric-value">0.8s</span></div>
+      <div class="metric-row"><span class="metric-label">Success rate</span><span class="metric-value">99.2%</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Config ── -->
+<div class="section-title">Engine Configuration</div>
+<div class="config-section">
+
+  <div class="config-card">
+    <div class="config-title">Trigger Conditions</div>
+    <div class="config-rows">
+      <div class="config-row">
+        <span class="config-key">Carrier cancellation</span>
+        <span class="config-val active">Enabled</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Delay threshold</span>
+        <span class="config-val edit">≥ 2 hours ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">SLA breach risk</span>
+        <span class="config-val edit">> 70% ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Customs flag</span>
+        <span class="config-val active">Enabled</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Penalty exposure</span>
+        <span class="config-val edit">≥ €500 ✎</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-card">
+    <div class="config-title">Scoring Weights</div>
+    <div class="config-rows">
+      <div class="config-row">
+        <span class="config-key">OTD Performance</span>
+        <span class="config-val edit">35% ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Capacity fit</span>
+        <span class="config-val edit">25% ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Cost premium</span>
+        <span class="config-val edit">25% ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">SLA risk reduction</span>
+        <span class="config-val edit">15% ✎</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-card">
+    <div class="config-title">Escalation Rules</div>
+    <div class="config-rows">
+      <div class="config-row">
+        <span class="config-key">Auto-approve if score</span>
+        <span class="config-val edit">≥ 95 ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Human timeout</span>
+        <span class="config-val edit">60 min ✎</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Escalate to</span>
+        <span class="config-val">Ops Manager</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Override audit</span>
+        <span class="config-val active">Always logged</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">Max scenarios</span>
+        <span class="config-val edit">3 ✎</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Animate scanning dots on detection agent
+setInterval(() => {
+  const el = document.querySelector('.agent-node.active .node-status .spin');
+  if (el) el.style.transform = `rotate(${Date.now() / 5 % 360}deg)`;
+}, 50);
+
+// Config value click
+document.querySelectorAll('.config-val.edit').forEach(el => {
+  el.addEventListener('click', () => {
+    const current = el.textContent.replace(' ✎', '');
+    const val = prompt('Update value:', current);
+    if (val !== null) el.textContent = val.trim() + ' ✎';
+  });
+});
+
+function selectAgent(idx) {
+  document.querySelectorAll('.detail-card').forEach((c, i) => {
+    c.style.boxShadow = i === idx ? '0 0 0 2px rgba(76,159,235,0.5)' : '';
+  });
+}
+</script>
+</body>
+</html>
